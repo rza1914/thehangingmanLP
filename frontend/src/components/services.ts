@@ -16,12 +16,12 @@ export function renderServices(i18n: I18nStore): HTMLElement {
     const dict = i18n.getDict();
     const items = dict.services.items as ServiceItem[];
 
-    const cardsHtml = items
+    const rowsHtml = items
       .map(
         (item, index) => `
-          <article class="service-card" data-reveal data-reveal-key="service-card-${index}" style="--reveal-delay:${index * 90}ms">
-            <h3 class="service-card__title">${item.title}</h3>
-            <p class="service-card__description">${item.description}</p>
+          <article class="service-row" data-reveal data-reveal-key="service-row-${index}" style="--reveal-delay:${index * 90}ms">
+            <h3 class="service-row__title">${item.title}</h3>
+            <p class="service-row__description">${item.description}</p>
           </article>
         `
       )
@@ -31,7 +31,7 @@ export function renderServices(i18n: I18nStore): HTMLElement {
       <div class="services__inner">
         <span class="section-eyebrow" data-reveal data-reveal-key="services-eyebrow">${t(dict, "services.eyebrow")}</span>
         <h2 class="section-heading" data-reveal data-reveal-key="services-heading" style="--reveal-delay:60ms">${t(dict, "services.heading")}</h2>
-        <div class="services__grid">${cardsHtml}</div>
+        <div class="services__list">${rowsHtml}</div>
       </div>
     `;
     initScrollReveal(section);

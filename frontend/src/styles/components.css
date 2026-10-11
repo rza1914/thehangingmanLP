@@ -174,7 +174,13 @@
   color: var(--text-primary);
 }
 
-/* Services */
+/* ==========================================================================
+   Minimal line-separated list layout (replaces boxed card template)
+   Used by both Services and Approach for a consistent editorial feel:
+   no background/border/shadow boxes — just thin horizontal divider lines,
+   with a subtle color/glow brighten on hover instead of movement or shadow.
+   ========================================================================== */
+
 .services {
   padding: var(--space-8) var(--space-3);
   border-top: 1px solid var(--border-color);
@@ -186,38 +192,57 @@
   text-align: center;
 }
 
-.services__grid {
+.services__list {
   margin-top: var(--space-6);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-3);
+  display: flex;
+  flex-direction: column;
   text-align: start;
 }
 
-.service-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+.service-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 260px) 1fr;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
-.service-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.15);
+.service-row:last-child {
+  border-bottom: 1px solid var(--border-color);
 }
 
-.service-card__title {
-  font-size: 1.1rem;
+.service-row__title {
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: var(--space-1);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-.service-card__description {
+.service-row__description {
   color: var(--text-secondary);
   font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.service-row:hover {
+  border-color: var(--accent);
+}
+
+.service-row:hover .service-row__title {
+  color: var(--accent-light);
+  text-shadow: 0 0 14px rgba(125, 211, 252, 0.45);
+}
+
+.service-row:hover .service-row__description {
+  color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+  .service-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
 }
 
 /* Approach */
@@ -237,32 +262,30 @@
   margin-top: var(--space-6);
   list-style: none;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+  display: flex;
+  flex-direction: column;
   text-align: start;
 }
 
 .approach-step {
-  display: flex;
-  gap: var(--space-2);
-  align-items: flex-start;
-  transition: transform 0.2s ease;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-color);
+  transition: border-color 0.3s ease;
 }
 
-.approach-step:hover {
-  transform: translateX(4px);
-}
-
-html[dir="rtl"] .approach-step:hover {
-  transform: translateX(-4px);
+.approach-step:last-child {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .approach-step__number {
-  font-size: 1.4rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--accent);
-  min-width: 2.2rem;
+  color: var(--text-secondary);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .approach-step__title {
@@ -270,11 +293,26 @@ html[dir="rtl"] .approach-step:hover {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.3rem;
+  transition: color 0.3s ease;
 }
 
 .approach-step__description {
   color: var(--text-secondary);
   font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.approach-step:hover {
+  border-color: var(--accent);
+}
+
+.approach-step:hover .approach-step__number {
+  color: var(--accent-light);
+  text-shadow: 0 0 12px rgba(125, 211, 252, 0.45);
+}
+
+.approach-step:hover .approach-step__title {
+  color: var(--accent-light);
 }
 
 /* Scroll-reveal animation: elements fade/slide into view the first time

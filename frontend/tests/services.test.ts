@@ -3,13 +3,13 @@ import { I18nStore } from "../src/i18n/i18n";
 import { renderServices } from "../src/components/services";
 
 describe("Services component", () => {
-  it("renders exactly 4 service cards with titles and descriptions in English", () => {
+  it("renders exactly 4 service rows with titles and descriptions in English", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const section = renderServices(i18n);
 
-    const cards = section.querySelectorAll(".service-card");
-    expect(cards.length).toBe(4);
+    const rows = section.querySelectorAll(".service-row");
+    expect(rows.length).toBe(4);
     expect(section.textContent).toContain("Web Application Development");
     expect(section.textContent).toContain("Backend & API Development");
     expect(section.textContent).toContain("Automation & Integrations");
@@ -31,17 +31,26 @@ describe("Services component", () => {
     i18n.setLocale("fa");
 
     expect(section.textContent).toContain("توسعه اپلیکیشن وب");
-    const cards = section.querySelectorAll(".service-card");
-    expect(cards.length).toBe(4);
+    const rows = section.querySelectorAll(".service-row");
+    expect(rows.length).toBe(4);
   });
 
-  it("marks each service card with a stable, unique data-reveal-key for scroll animation", () => {
+  it("marks each service row with a stable, unique data-reveal-key for scroll animation", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const section = renderServices(i18n);
 
     for (let i = 0; i < 4; i += 1) {
-      expect(section.querySelector(`[data-reveal-key="service-card-${i}"]`)).toBeTruthy();
+      expect(section.querySelector(`[data-reveal-key="service-row-${i}"]`)).toBeTruthy();
     }
+  });
+
+  it("does not use the old boxed-card template (no background/border card classes)", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderServices(i18n);
+
+    expect(section.querySelector(".service-card")).toBeNull();
+    expect(section.querySelector(".services__grid")).toBeNull();
   });
 });
