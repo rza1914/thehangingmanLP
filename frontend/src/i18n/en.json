@@ -17,5 +17,49 @@
     "headline": "I build software. Alone, carefully, and on time.",
     "subheadline": "No agency, no sales team, no inflated promises — just one developer who writes the code, talks to you directly, and stands behind every line of it.",
     "cta": "Let's talk about your project"
+  },
+  "services": {
+    "eyebrow": "What I Do",
+    "heading": "Services",
+    "items": [
+      {
+        "title": "Web Application Development",
+        "description": "I design and build responsive, fast, and maintainable web applications from scratch — from the first line of code to deployment. Whether it's a marketing site, an internal tool, or a full product, I handle the entire stack myself."
+      },
+      {
+        "title": "Backend & API Development",
+        "description": "I build reliable backend systems and APIs that your applications can depend on — clean architecture, proper error handling, and documentation that makes sense to the next developer who touches the code."
+      },
+      {
+        "title": "Automation & Integrations",
+        "description": "From Telegram bots to workflow automation between your tools, I connect systems so your repetitive tasks disappear. If it can be scripted, it probably should be."
+      },
+      {
+        "title": "Technical Consulting & Code Review",
+        "description": "Not sure if your current codebase is solid, or whether a new feature is worth building the way it's planned? I review, audit, and give you a straight, honest opinion — no upselling."
+      }
+    ]
+  },
+  "approach": {
+    "eyebrow": "How I Work",
+    "heading": "A Simple, Honest Process",
+    "steps": [
+      {
+        "title": "Discovery Call",
+        "description": "We talk about what you actually need, not what sounds impressive. No obligation, no sales pitch."
+      },
+      {
+        "title": "Scope & Estimate",
+        "description": "You get a clear scope, timeline, and price before any commitment — no surprises halfway through."
+      },
+      {
+        "title": "Build in the Open",
+        "description": "Regular updates as I build. You see progress, not just a final reveal at the deadline."
+      },
+      {
+        "title": "Delivery & Support",
+        "description": "You get working software, documentation, and a direct line to me if something needs fixing after launch."
+      }
+    ]
   }
 }

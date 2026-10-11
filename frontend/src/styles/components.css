@@ -131,6 +131,116 @@
   margin-top: var(--space-2);
 }
 
+/* Shared section header styles (Services, Approach, and future sections) */
+.section-eyebrow {
+  display: block;
+  color: var(--accent-light);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.section-heading {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Services */
+.services {
+  padding: var(--space-8) var(--space-3);
+  border-top: 1px solid var(--border-color);
+}
+
+.services__inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.services__grid {
+  margin-top: var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+  text-align: start;
+}
+
+.service-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.service-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.service-card__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.service-card__description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Approach */
+.approach {
+  padding: var(--space-8) var(--space-3);
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.approach__inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.approach__steps {
+  margin-top: var(--space-6);
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  text-align: start;
+}
+
+.approach-step {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.approach-step__number {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 2.2rem;
+}
+
+.approach-step__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+
+.approach-step__description {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
 @media (max-width: 720px) {
   .site-header__nav {
     display: none;

@@ -5,6 +5,8 @@ import "./styles/components.css";
 import { I18nStore } from "./i18n/i18n";
 import { renderHeader } from "./components/header";
 import { renderHero } from "./components/hero";
+import { renderServices } from "./components/services";
+import { renderApproach } from "./components/approach";
 import { config } from "./config";
 
 function bootstrap(): void {
@@ -18,6 +20,8 @@ function bootstrap(): void {
 
   app.appendChild(renderHeader(i18n));
   app.appendChild(renderHero(i18n));
+  app.appendChild(renderServices(i18n));
+  app.appendChild(renderApproach(i18n));
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
