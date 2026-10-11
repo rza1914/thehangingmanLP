@@ -93,6 +93,27 @@ Use the included `render.yaml` blueprint, or manually create a Web Service:
 - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Set env vars: `BOT_TOKEN`, `CHAT_ID`, `ALLOWED_ORIGINS` (set to your Cloudflare Pages URL)
 
+## Motion & Accessibility
+
+The site uses a lightweight, dependency-free motion layer (see
+`frontend/src/utils/scrollReveal.ts`):
+
+- **Scroll-reveal**: sections and cards fade/slide into view the first time
+  they enter the viewport, using `IntersectionObserver`. Content already seen
+  (e.g. before a language switch rebuilds the DOM) is shown immediately
+  instead of re-animating, to avoid a jarring re-fade.
+- **Micro-interactions**: a subtle breathing glow on the header logo, a
+  bouncing scroll cue under the Hero, smooth anchor scrolling, and richer
+  hover states on cards/steps.
+- **Accessibility**: every animation respects the OS-level
+  `prefers-reduced-motion` setting. When enabled, all scroll-reveal content
+  is shown immediately and all CSS animations/transitions are effectively
+  disabled (see the global override in `base.css` and the component-level
+  rules in `components.css`).
+
+To test reduced-motion behavior locally: in Chrome DevTools, open the
+Rendering tab → "Emulate CSS media feature prefers-reduced-motion" → `reduce`.
+
 ## Phase 1 scope
 
 - Project scaffolding (frontend + backend)
@@ -102,4 +123,12 @@ Use the included `render.yaml` blueprint, or manually create a Web Service:
 - Backend `/health` and `/contact` (mock mode + honeypot spam stub)
 - CORS wired via env var
 
-Not yet implemented (future phases): Services, Approach, Portfolio, FAQ, full Contact form, real Telegram send, rate limiting, SEO/meta polish.
+## Phase 2 scope
+
+- Services section (4 cards, draft copy)
+- Approach / How I Work section (4 steps, draft copy)
+- Scroll-reveal motion layer + micro-interactions (this update), fully
+  accessible via `prefers-reduced-motion`
+
+Not yet implemented (future phases): Portfolio-link, FAQ, Footer, full
+Contact form, real Telegram send, rate limiting, SEO/meta polish.

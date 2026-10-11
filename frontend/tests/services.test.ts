@@ -34,4 +34,14 @@ describe("Services component", () => {
     const cards = section.querySelectorAll(".service-card");
     expect(cards.length).toBe(4);
   });
+
+  it("marks each service card with a stable, unique data-reveal-key for scroll animation", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderServices(i18n);
+
+    for (let i = 0; i < 4; i += 1) {
+      expect(section.querySelector(`[data-reveal-key="service-card-${i}"]`)).toBeTruthy();
+    }
+  });
 });

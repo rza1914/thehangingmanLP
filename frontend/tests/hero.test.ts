@@ -21,4 +21,23 @@ describe("Hero component", () => {
 
     expect(hero.textContent).toContain("نرم‌افزار می‌سازم");
   });
+
+  it("marks headline, subheadline, and cta with data-reveal attributes for scroll animation", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const hero = renderHero(i18n);
+
+    expect(hero.querySelector('[data-reveal-key="hero-headline"]')).toBeTruthy();
+    expect(hero.querySelector('[data-reveal-key="hero-subheadline"]')).toBeTruthy();
+    expect(hero.querySelector('[data-reveal-key="hero-cta"]')).toBeTruthy();
+  });
+
+  it("renders a scroll cue linking to the services section", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const hero = renderHero(i18n);
+
+    const scrollCue = hero.querySelector('a[href="#services"].hero__scroll-cue');
+    expect(scrollCue).toBeTruthy();
+  });
 });

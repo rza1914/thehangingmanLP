@@ -33,4 +33,14 @@ describe("Approach component", () => {
     const steps = section.querySelectorAll(".approach-step");
     expect(steps.length).toBe(4);
   });
+
+  it("marks each step with a stable, unique data-reveal-key for scroll animation", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderApproach(i18n);
+
+    for (let i = 0; i < 4; i += 1) {
+      expect(section.querySelector(`[data-reveal-key="approach-step-${i}"]`)).toBeTruthy();
+    }
+  });
 });

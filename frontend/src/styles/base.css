@@ -7,6 +7,10 @@ html, body {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -46,4 +50,20 @@ button {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 var(--space-3);
+}
+
+/* Global safety net: respect the user's OS-level reduced-motion preference
+   across every animation/transition on the site, not just the ones we
+   explicitly handle in JS. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

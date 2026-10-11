@@ -25,8 +25,13 @@
 }
 
 .site-header__logo {
-  filter: drop-shadow(0 0 8px rgba(125, 211, 252, 0.45));
   border-radius: 8px;
+  animation: logoGlow 4s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(125, 211, 252, 0.45)); }
+  50% { filter: drop-shadow(0 0 16px rgba(125, 211, 252, 0.8)); }
 }
 
 .site-header__brand-name {
@@ -131,6 +136,27 @@
   margin-top: var(--space-2);
 }
 
+.hero__scroll-cue {
+  margin-top: var(--space-4);
+  display: inline-flex;
+  padding: var(--space-1);
+  animation: scrollCueBounce 2s ease-in-out infinite;
+}
+
+.hero__scroll-cue-arrow {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid var(--accent-light);
+  border-bottom: 2px solid var(--accent-light);
+  transform: rotate(45deg);
+}
+
+@keyframes scrollCueBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(8px); opacity: 1; }
+}
+
 /* Shared section header styles (Services, Approach, and future sections) */
 .section-eyebrow {
   display: block;
@@ -173,12 +199,13 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .service-card:hover {
   border-color: var(--accent);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.15);
 }
 
 .service-card__title {
@@ -220,6 +247,15 @@
   display: flex;
   gap: var(--space-2);
   align-items: flex-start;
+  transition: transform 0.2s ease;
+}
+
+.approach-step:hover {
+  transform: translateX(4px);
+}
+
+html[dir="rtl"] .approach-step:hover {
+  transform: translateX(-4px);
 }
 
 .approach-step__number {
@@ -239,6 +275,33 @@
 .approach-step__description {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+/* Scroll-reveal animation: elements fade/slide into view the first time
+   they cross into the viewport (see src/utils/scrollReveal.ts). */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header__logo,
+  .hero__scroll-cue {
+    animation: none;
+  }
+
+  [data-reveal] {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 720px) {
