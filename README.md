@@ -93,42 +93,49 @@ Use the included `render.yaml` blueprint, or manually create a Web Service:
 - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Set env vars: `BOT_TOKEN`, `CHAT_ID`, `ALLOWED_ORIGINS` (set to your Cloudflare Pages URL)
 
-## Motion & Accessibility
+## Motion & Blueprint Line System
 
-The site uses a lightweight, dependency-free motion layer (see
-`frontend/src/utils/scrollReveal.ts`):
+- **Scroll-reveal**: sections and text fade/slide into view the first time they
+  enter the viewport (`src/utils/scrollReveal.ts`). Already-seen content is
+  shown immediately on re-render instead of re-animating.
+- **Blueprint connector lines** (`src/utils/blueprintLines.ts`): a single
+  continuous vertical "trunk" line runs from the bottom of the Hero section
+  down through Services and Approach, getting thinner the further it travels
+  from the Hero. At each section heading it branches off with a medium-width
+  plain line pointing at the heading; at each individual service/step it
+  branches off with a thin plain line pointing at that item. No arrowheads —
+  plain strokes only. As the user scrolls, each segment "draws" itself in
+  sync with scroll position — like a pen sketching a blueprint — via SVG
+  `stroke-dasharray`/`dashoffset`. A glowing dot ("pen tip") tracks the
+  current drawing position.
+  - Disabled entirely below an 860px viewport width (the effect only makes
+    sense alongside the desktop/tablet layout).
+  - Fully respects `prefers-reduced-motion`: the whole line renders instantly,
+    fully drawn, with no scroll-linked animation.
+  - Re-measures and redraws automatically on window resize and on every
+    language switch (anchor positions shift when text/direction changes).
+  - **Known limitation**: the trunk's horizontal position is currently a
+    fixed offset from the page edge and does not fully re-balance for RTL
+    beyond mirroring which side it sits on. Please visually review in
+    Persian and flag if branch lines look too long/short — this is a simple
+    constant to tune, not an architectural change.
 
-- **Scroll-reveal**: sections and cards fade/slide into view the first time
-  they enter the viewport, using `IntersectionObserver`. Content already seen
-  (e.g. before a language switch rebuilds the DOM) is shown immediately
-  instead of re-animating, to avoid a jarring re-fade.
-- **Micro-interactions**: a subtle breathing glow on the header logo, a
-  bouncing scroll cue under the Hero, smooth anchor scrolling, and richer
-  hover states on cards/steps.
-- **Accessibility**: every animation respects the OS-level
-  `prefers-reduced-motion` setting. When enabled, all scroll-reveal content
-  is shown immediately and all CSS animations/transitions are effectively
-  disabled (see the global override in `base.css` and the component-level
-  rules in `components.css`).
-
-To test reduced-motion behavior locally: in Chrome DevTools, open the
-Rendering tab → "Emulate CSS media feature prefers-reduced-motion" → `reduce`.
+To test reduced-motion: Chrome DevTools → Rendering tab → "Emulate CSS media
+  feature prefers-reduced-motion" → `reduce`.
 
 ## Phase 1 scope
 
 - Project scaffolding (frontend + backend)
 - i18n engine (EN default, FA toggle, no reload, dir/lang switching)
-- Header component (logo, brand, nav placeholders, language switch, CTA)
-- Hero section (draft copy, pending final approval)
+- Header, Hero (draft copy)
 - Backend `/health` and `/contact` (mock mode + honeypot spam stub)
-- CORS wired via env var
 
 ## Phase 2 scope
 
-- Services section (4 cards, draft copy)
+- Services section (4 rows, draft copy)
 - Approach / How I Work section (4 steps, draft copy)
-- Scroll-reveal motion layer + micro-interactions (this update), fully
-  accessible via `prefers-reduced-motion`
+- Scroll-reveal motion layer, accessible via `prefers-reduced-motion`
+- Blueprint connector line system: plain lines only, no arrowheads (this update)
 
 Not yet implemented (future phases): Portfolio-link, FAQ, Footer, full
 Contact form, real Telegram send, rate limiting, SEO/meta polish.

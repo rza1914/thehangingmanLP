@@ -97,6 +97,68 @@
   box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
 }
 
+/* ==========================================================================
+   Blueprint zone: wraps Hero + Services + Approach. Establishes the
+   positioning context for the SVG line-drawing overlay (.blueprint-svg)
+   and guarantees real content always paints above it.
+   ========================================================================== */
+.blueprint-zone,
+#blueprint-zone {
+  position: relative;
+}
+
+#blueprint-zone > section {
+  position: relative;
+  z-index: 1;
+}
+
+.blueprint-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.blueprint-segment {
+  fill: none;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+.blueprint-segment--trunk {
+  stroke: var(--accent-dark);
+  opacity: 0.9;
+}
+
+.blueprint-segment--heading {
+  stroke: var(--accent);
+  opacity: 0.9;
+}
+
+.blueprint-segment--item {
+  stroke: var(--accent-light);
+  opacity: 0.65;
+}
+
+.blueprint-pen {
+  fill: var(--accent-light);
+  filter: drop-shadow(0 0 6px rgba(125, 211, 252, 0.85));
+}
+
+@media (max-width: 860px) {
+  .blueprint-svg {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blueprint-segment {
+    transition: none;
+  }
+}
+
 .hero {
   padding: var(--space-8) var(--space-3);
 }
@@ -136,8 +198,13 @@
   margin-top: var(--space-2);
 }
 
+.hero__trunk-anchor {
+  width: 1px;
+  height: 0;
+}
+
 .hero__scroll-cue {
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
   display: inline-flex;
   padding: var(--space-1);
   animation: scrollCueBounce 2s ease-in-out infinite;
@@ -174,6 +241,7 @@
   color: var(--text-primary);
 }
 
+/* Services */
 .services {
   padding: var(--space-8) var(--space-3);
   border-top: 1px solid var(--border-color);
@@ -190,80 +258,27 @@
   text-align: start;
 }
 
-/* ==========================================================================
-   Blueprint-style dividers: irregular-length horizontal lines (varying
-   start point and length per row, via CSS custom properties set inline
-   from TypeScript) with a short vertical "jog" tick at one end. On hover of
-   the row, that row's own jog grows noticeably taller — the "long line
-   appears" effect — instead of a boxed/card hover treatment.
-   ========================================================================== */
-
-.row-divider {
-  position: relative;
-  height: 1px;
-  background: var(--border-color);
-  margin-inline-start: var(--line-start, 0%);
-  width: calc(var(--line-end, 100%) - var(--line-start, 0%));
-  transition: background-color 0.3s ease;
-}
-
-.row-divider--closing {
-  margin-block-start: var(--space-4);
-}
-
-.row-divider__jog {
-  position: absolute;
-  top: 0;
-  width: 1px;
-  height: var(--jog-height, 16px);
-  background: var(--border-color);
-  transition: height 0.4s ease, background-color 0.3s ease;
-}
-
-.row-divider__jog--end {
-  inset-inline-end: 0;
-}
-
-.row-divider__jog--start {
-  inset-inline-start: 0;
-}
-
-.row-wrap:hover .row-divider {
-  background: var(--accent);
-}
-
-.row-wrap:hover .row-divider__jog {
-  height: var(--jog-grow, 96px);
-  background: var(--accent-light);
-}
-
 .service-row {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-color);
   display: grid;
   grid-template-columns: minmax(160px, 260px) 1fr;
   gap: var(--space-2) var(--space-4);
-  padding-block: var(--space-3) var(--space-4);
+}
+
+.service-row:last-child {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .service-row__title {
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .service-row__description {
   color: var(--text-secondary);
   font-size: 0.95rem;
-  transition: color 0.3s ease;
-}
-
-.row-wrap:hover .service-row__title {
-  color: var(--accent-light);
-  text-shadow: 0 0 14px rgba(125, 211, 252, 0.45);
-}
-
-.row-wrap:hover .service-row__description {
-  color: var(--text-primary);
 }
 
 @media (max-width: 640px) {
@@ -292,18 +307,22 @@
 }
 
 .approach-step {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-color);
   display: grid;
   grid-template-columns: 56px 1fr;
   align-items: start;
   gap: var(--space-3);
-  padding-block: var(--space-3) var(--space-4);
+}
+
+.approach-step:last-child {
+  border-bottom: 1px solid var(--border-color);
 }
 
 .approach-step__number {
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-secondary);
-  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .approach-step__title {
@@ -311,21 +330,11 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.3rem;
-  transition: color 0.3s ease;
 }
 
 .approach-step__description {
   color: var(--text-secondary);
   font-size: 0.9rem;
-}
-
-.row-wrap:hover .approach-step__number {
-  color: var(--accent-light);
-  text-shadow: 0 0 12px rgba(125, 211, 252, 0.45);
-}
-
-.row-wrap:hover .approach-step__title {
-  color: var(--accent-light);
 }
 
 /* Scroll-reveal animation: elements fade/slide into view the first time
