@@ -1,115 +1,105 @@
-# The Hanging Man — Website
+# The Hanging Man
 
-Bilingual (English / Persian) landing page for an independent software
-development & automation business. Pure static site: HTML + CSS + vanilla
-JavaScript. No build step, no paid services, no secrets in the frontend.
+Independent software developer's marketing website.
 
-## Run locally
+## Structure
 
-Option A — just open `index.html` in your browser.
-Option B (closer to production):
+```
+thehangingman/
+├── frontend/   Vite + TypeScript static site (Cloudflare Pages)
+└── backend/    FastAPI contact-form endpoint (Render)
+```
 
-    python3 -m http.server 8000
-    # or: npx serve .
+## Frontend
 
-then visit http://localhost:8000
+### Install & run locally
 
-## Project structure
+```bash
+cd frontend
+npm install
+cp .env.example .env   # edit VITE_API_BASE_URL if backend runs elsewhere
+npm run dev
+```
 
-    index.html          page structure (all sections)
-    css/styles.css      design system + responsive + RTL rules
-    js/config.js        THE file you edit (contacts, form endpoint)
-    js/i18n.js          all English & Persian copy
-    js/main.js          language switcher, nav, FAQ, form logic
-    assets/logo.png     drop your logo here (see below)
-    assets/favicon.svg  temporary braces-mark favicon (replaceable)
+Opens on http://localhost:5173
 
-## 1. Add your logo (2 minutes)
+### Test
 
-Save your logo image as `assets/logo.png` (PNG or JPG — the file must be
-named `logo.png`, or update the three `<img data-logo>` tags in index.html).
-It is picked up automatically in the header, hero, and footer. Until the
-file exists, the site shows a typographic braces mark instead — nothing
-breaks, no broken-image icons.
+```bash
+npm run test
+```
 
-The hero frame is square (`aspect-ratio: 1/1` in css/styles.css, class
-`.logo-frame`). If your logo is much wider than tall, change that to
-e.g. `4/3`.
+### Build for production
 
-## 2. Make the contact form real (5 minutes, free)
+```bash
+npm run build
+```
 
-Until configured, the form validates input but shows an honest notice
-instead of pretending to send. To enable real submissions:
+Output goes to `frontend/dist`.
 
-1. Create a free account at https://formspree.io
-2. Create a new form → copy the endpoint (looks like `https://formspree.io/f/abcdwxyz`)
-3. Open `js/config.js` and paste it into `formEndpoint`
-4. Reload the site and send yourself a test inquiry
+### Deploy (Cloudflare Pages)
 
-Formspree's free tier handles 50 submissions/month. The endpoint URL is
-public by design — it is not a secret key, so it is safe in frontend code.
-The form includes a `_gotcha` honeypot field for basic spam filtering and
-tags every submission with the language it was sent in.
+1. Connect the repository in Cloudflare Pages.
+2. Build command: `npm run build` (root directory: `frontend`)
+3. Output directory: `dist`
+4. Set environment variable `VITE_API_BASE_URL` to the deployed backend URL.
 
-## 3. Contact channels
+### IMPORTANT: Logo asset
 
-In `js/config.js`, fill any of:
+This text-based delivery channel cannot transmit binary files. Before deploying,
+manually place the approved logo PNG at `frontend/public/logo.png`.
+The header component degrades gracefully (hides broken image) if the file is missing.
 
-    telegram: "https://t.me/yourusername"
-    whatsapp: "https://wa.me/989123456789"
-    email:    "mailto:hello@thehangingman.com"
+## Backend
 
-Empty values stay completely hidden. Filled values appear automatically in
-the Contact section and the footer, with a clean @handle / address / number.
+### Install & run locally
 
-## 4. Editing copy
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env        # fill BOT_TOKEN / CHAT_ID when available
+uvicorn app.main:app --reload
+```
 
-All text lives in `js/i18n.js` — English and Persian side by side.
-The brand name "The Hanging Man" is intentionally kept in English.
+Runs on http://localhost:8000
 
-## Deploy (pick one — all free, no build step)
+### Test
 
-### GitHub Pages
-1. Create a repository (e.g. `thehangingman`) and push these files to `main`.
-2. Repo → Settings → Pages → Source: "Deploy from a branch" → `main` / `/ (root)`.
-3. Live at `https://<username>.github.io/thehangingman/`.
+```bash
+pytest -v
+```
 
-### Cloudflare Pages (recommended for the custom domain later)
-1. Push the files to GitHub.
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git.
-3. Framework preset: **None**. Build command: leave empty. Output directory: `/`.
+### Environment variables
 
-### Vercel
-1. Push to GitHub → vercel.com → Add New → Project → Import.
-2. Framework Preset: **Other**. No build settings needed.
+| Var | Required | Description |
+|---|---|---|
+| BOT_TOKEN | No (mock mode if absent) | Telegram bot token |
+| CHAT_ID | No (mock mode if absent) | Telegram chat id to receive messages |
+| ALLOWED_ORIGINS | Yes in production | Comma-separated list of allowed CORS origins |
+| ENVIRONMENT | No | development / production (informational) |
 
-## Custom domain (when you buy thehangingman.com)
+If `BOT_TOKEN`/`CHAT_ID` are not set, `/contact` runs in **mock mode**: it logs
+the submission server-side and returns success, instead of calling Telegram.
+This lets the whole stack be developed and tested before real bot credentials exist.
 
-- Cloudflare Pages: project → Custom domains → add `thehangingman.com`
-  (and `www`) → add the DNS records it shows you.
-- GitHub Pages: Settings → Pages → Custom domain; point DNS with the
-  A/CNAME records GitHub instructs.
-- After that, uncomment the `canonical`, `og:url` and `og:image` lines
-  near the top of `index.html`.
-- Optional: add `assets/og.png` (1200×630) as the social share image.
+### Deploy (Render)
 
-## Still needed from you
+Use the included `render.yaml` blueprint, or manually create a Web Service:
 
-- [ ] `assets/logo.png` — your actual logo file
-- [ ] Telegram / WhatsApp / Email URLs → `js/config.js`
-- [ ] Formspree endpoint → `js/config.js` (or your preferred provider)
-- [ ] Real portfolio projects — a ready-to-copy HTML template is commented
-      inside the `#work` section of index.html
-- [ ] Domain purchase + DNS when you're ready
-- [ ] Optional 1200×630 `og.png`
+- Root directory: `backend`
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Set env vars: `BOT_TOKEN`, `CHAT_ID`, `ALLOWED_ORIGINS` (set to your Cloudflare Pages URL)
 
-## Notes
+## Phase 1 scope
 
-- No analytics, no trackers, no external JavaScript. The only external
-  requests are Google Fonts (Space Grotesk, JetBrains Mono, Vazirmatn).
-- Persian mode is a full RTL experience: layout flips via logical CSS
-  properties, typography switches to Vazirmatn, letter-spacing is removed
-  (it breaks Persian letter joining), numbers localize, and the footer
-  year becomes Jalali. The chosen language persists across reloads.
-- The current favicon is an SVG braces mark drawn for this build. It is
-  NOT your logo — swap `assets/favicon.svg` if you prefer.
+- Project scaffolding (frontend + backend)
+- i18n engine (EN default, FA toggle, no reload, dir/lang switching)
+- Header component (logo, brand, nav placeholders, language switch, CTA)
+- Hero section (draft copy, pending final approval)
+- Backend `/health` and `/contact` (mock mode + honeypot spam stub)
+- CORS wired via env var
+
+Not yet implemented (future phases): Services, Approach, Portfolio, FAQ, full Contact form, real Telegram send, rate limiting, SEO/meta polish.

@@ -1,0 +1,21 @@
+{
+  "meta": { "lang": "en", "dir": "ltr" },
+  "header": {
+    "brand": "The Hanging Man",
+    "nav": {
+      "services": "Services",
+      "approach": "Approach",
+      "portfolio": "Portfolio",
+      "faq": "FAQ",
+      "contact": "Contact"
+    },
+    "cta": "Get in touch",
+    "langSwitch": "فارسی"
+  },
+  "hero": {
+    "eyebrow": "Independent Software Developer",
+    "headline": "I build software. Alone, carefully, and on time.",
+    "subheadline": "No agency, no sales team, no inflated promises — just one developer who writes the code, talks to you directly, and stands behind every line of it.",
+    "cta": "Let's talk about your project"
+  }
+}
