@@ -35,7 +35,7 @@ describe("Services component", () => {
     expect(rows.length).toBe(4);
   });
 
-  it("marks each service row with a stable, unique data-reveal-key for scroll animation", () => {
+  it("marks each row-wrap with a stable, unique data-reveal-key for scroll animation", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const section = renderServices(i18n);
@@ -45,12 +45,31 @@ describe("Services component", () => {
     }
   });
 
-  it("does not use the old boxed-card template (no background/border card classes)", () => {
+  it("does not use the old boxed-card template", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const section = renderServices(i18n);
 
     expect(section.querySelector(".service-card")).toBeNull();
     expect(section.querySelector(".services__grid")).toBeNull();
+  });
+
+  it("renders one blueprint-style divider above each row plus a closing divider (items + 1)", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderServices(i18n);
+
+    const dividers = section.querySelectorAll(".row-divider");
+    expect(dividers.length).toBe(5); // 4 rows + 1 closing divider
+    expect(section.querySelector(".row-divider--closing")).toBeTruthy();
+  });
+
+  it("renders a vertical jog tick inside each row's divider (not the closing one)", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderServices(i18n);
+
+    const jogs = section.querySelectorAll(".row-divider__jog");
+    expect(jogs.length).toBe(4);
   });
 });

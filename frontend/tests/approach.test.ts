@@ -34,7 +34,7 @@ describe("Approach component", () => {
     expect(steps.length).toBe(4);
   });
 
-  it("marks each step with a stable, unique data-reveal-key for scroll animation", () => {
+  it("marks each row-wrap with a stable, unique data-reveal-key for scroll animation", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const section = renderApproach(i18n);
@@ -42,5 +42,24 @@ describe("Approach component", () => {
     for (let i = 0; i < 4; i += 1) {
       expect(section.querySelector(`[data-reveal-key="approach-step-${i}"]`)).toBeTruthy();
     }
+  });
+
+  it("renders one blueprint-style divider above each step plus a closing divider (steps + 1)", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderApproach(i18n);
+
+    const dividers = section.querySelectorAll(".row-divider");
+    expect(dividers.length).toBe(5);
+    expect(section.querySelector(".row-divider--closing")).toBeTruthy();
+  });
+
+  it("renders a vertical jog tick inside each step's divider (not the closing one)", () => {
+    const i18n = new I18nStore("en");
+    i18n.init();
+    const section = renderApproach(i18n);
+
+    const jogs = section.querySelectorAll(".row-divider__jog");
+    expect(jogs.length).toBe(4);
   });
 });
