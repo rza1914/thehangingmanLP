@@ -1,12 +1,13 @@
 # The Hanging Man
 
 Independent software developer's marketing website.
+One continuous line-drawing narrative, drawn by the scroll itself.
 
 ## Structure
 
 ```
 thehangingman/
-├── frontend/   Vite + TypeScript static site (Cloudflare Pages)
+├── frontend/   Vite + TypeScript site (Cloudflare Pages)
 └── backend/    FastAPI contact-form endpoint (Render)
 ```
 
@@ -29,26 +30,108 @@ Opens on http://localhost:5173
 npm run test
 ```
 
+50 tests across 8 files: stage, services, approach, header, i18n,
+scroll-reveal, line variant, and the retired blueprint system.
+
 ### Build for production
 
 ```bash
 npm run build
 ```
 
+Runs `tsc --noEmit && vite build` — the build **fails on any type error**.
 Output goes to `frontend/dist`.
 
-### Deploy (Cloudflare Pages)
+## The scroll-narrative stage
 
-1. Connect the repository in Cloudflare Pages.
-2. Build command: `npm run build` (root directory: `frontend`)
-3. Output directory: `dist`
-4. Set environment variable `VITE_API_BASE_URL` to the deployed backend URL.
+The desktop experience is a single pinned "camera" that pans down one
+continuous SVG drawing as the user scrolls:
 
-### IMPORTANT: Logo asset
+- One `.stage-wrap` (520vh scroll band) + one sticky `.stage`.
+- One SVG canvas of 1600 × 4500 units; the `viewBox` pans from y = 0 to
+  y = 3600 with scroll progress. The narrative is never cut into separate
+  screens — it is one continuous drawing.
+- Every line and text gets its draw window derived from its canvas Y
+  (`lineWin()` / `textWin()` in `src/components/stage.ts`), so drawing tips
+  stay just ahead of the viewport's bottom edge: lines are drawn *by* the
+  scroll, never static.
+- A glowing pen tip rides the trunk segment currently being drawn.
+- The narrative, in canvas order:
+  1. **Hero** — the brand title writes itself, the hero line draws, three
+     hanging teaser lines carry the value props, the trunk (V1) hangs from
+     the very top edge.
+  2. **WHO I AM** — thin lines off the trunk, words along them.
+  3. **HOW I WORK** — the trunk continues as V2, crossing H2/H3; steps on
+     thin lines.
+  4. **WHAT I BUILD** — a horizontal rail with four sketch-drawn service
+     boxes hanging from it.
+  5. **START A PROJECT** — base line, CTA, six channel lines rising from
+     it, and the footer hairline with descending tagline/copyright.
+- The trunk is one continuous line from the top edge to the base line.
+- **RTL / Persian**: the whole composition is mirrored (via the `X()`
+  helper), text directions are set explicitly, typography switches to
+  Vazirmatn. Switching languages re-renders the stage without a reload.
+- **Mobile (< 820px)**: the stage is hidden; a semantic text page is shown
+  instead (hero, services, approach, FAQ, work, contact form, footer).
+- **prefers-reduced-motion**: the canvas renders fully drawn; scrolling
+  pans the camera with no animation. To test: Chrome DevTools → Rendering
+  tab → "Emulate CSS media feature prefers-reduced-motion" → `reduce`.
+- **Pacing**: the total scroll length is one CSS value —
+  `.stage-wrap{height:520vh}` in `src/styles/components.css`.
+  Lower = faster narrative, higher = slower. Nothing else needs changing.
 
-This text-based delivery channel cannot transmit binary files. Before deploying,
-manually place the approved logo PNG at `frontend/public/logo.png`.
-The header component degrades gracefully (hides broken image) if the file is missing.
+### Header navigation
+
+Three buttons (`data-nav`): **About** pans the camera to the WHO I AM
+screen, **Process** to HOW I WORK, **Contact** scrolls to the inquiry form
+below the stage. On mobile they scroll the text sections.
+
+### Retired systems
+
+`src/components/hero.ts` and `src/utils/blueprintLines.ts` are no longer
+rendered by `main.ts` — the stage replaced them — but are kept in the
+tree, with their tests still passing. Optional cleanup: `git rm` them and
+their test files in one commit.
+
+## Sections below the stage
+
+- **FAQ** — accessible accordion: first item open by default, keyboard
+  operable, instant open under reduced motion.
+- **Work** — a single GitHub row; no fabricated projects. A commented
+  template inside `work.ts` shows how to add a real project later.
+- **Contact form** — name / email / message (+ hidden honeypot, + locale).
+  Client-side validation with inline bilingual errors; POSTs to
+  `${VITE_API_BASE_URL}/contact`; 15s AbortController timeout to tolerate
+  Render cold starts; honest success/error states only.
+- **Footer** — mobile only. On desktop the footer is the stage's final
+  beat (hairline + descending tagline/copyright). Hidden via
+  `@media (min-width:821px){.site-footer{display:none}}`.
+
+## i18n
+
+- Engine: `src/i18n/i18n.ts` (`I18nStore`); dictionaries in
+  `src/i18n/en.json` / `src/i18n/fa.json`.
+- English default, Persian toggle with no reload: `lang`/`dir` switch,
+  `document.title`, meta description and OG locale update, choice
+  persisted in localStorage.
+- The brand name stays in English in both languages.
+- Persian typography: Vazirmatn, letter-spacing removed (it breaks Persian
+  letter joining), Jalali year in the footer.
+
+## Contact channels
+
+All channels live in `frontend/src/config.ts`. An empty value hides that
+channel everywhere (stage channel lines and footer) — no broken links are
+possible. Currently configured:
+
+| Channel | Value |
+|---|---|
+| GitHub | https://github.com/thehangingman1911-ai |
+| Telegram | https://t.me/thehangingman1911 |
+| WhatsApp | https://wa.me/message/CCMR56KMR4R3M1 |
+| X | https://x.com/rbaghani31159 |
+| Email | thehangingman.1911@gmail.com |
+| Phone | +44 7449 768066 |
 
 ## Backend
 
@@ -80,62 +163,54 @@ pytest -v
 | ALLOWED_ORIGINS | Yes in production | Comma-separated list of allowed CORS origins |
 | ENVIRONMENT | No | development / production (informational) |
 
-If `BOT_TOKEN`/`CHAT_ID` are not set, `/contact` runs in **mock mode**: it logs
-the submission server-side and returns success, instead of calling Telegram.
-This lets the whole stack be developed and tested before real bot credentials exist.
+If `BOT_TOKEN`/`CHAT_ID` are not set, `/contact` runs in **mock mode**: it
+logs the submission server-side and returns success instead of calling
+Telegram. ⚠️ Do not serve real traffic in mock mode — set the Telegram
+credentials and `ENVIRONMENT=production` before sharing the site widely,
+or inquiries will be logged but never delivered.
 
-### Deploy (Render)
+## Deploy
 
-Use the included `render.yaml` blueprint, or manually create a Web Service:
+Order matters:
 
-- Root directory: `backend`
-- Build command: `pip install -r requirements.txt`
-- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Set env vars: `BOT_TOKEN`, `CHAT_ID`, `ALLOWED_ORIGINS` (set to your Cloudflare Pages URL)
+1. **Backend → Render**: use the included `render.yaml` blueprint, or a
+   Web Service with root directory `backend`, build command
+   `pip install -r requirements.txt`, start command
+   `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Set
+   `ALLOWED_ORIGINS=*` temporarily and `ENVIRONMENT=development`.
+2. **Frontend env**: set `VITE_API_BASE_URL` to the deployed backend URL
+   (locally in `frontend/.env`, later in Cloudflare Pages settings).
+3. **Frontend → Cloudflare Pages**: connect the repo; root directory
+   `frontend`; build command `npm run build`; output directory `dist`;
+   environment variable `VITE_API_BASE_URL`.
+4. **Lock CORS**: set `ALLOWED_ORIGINS` on Render to your Pages URL.
+5. **Activate Telegram**: create a bot with @BotFather, get your chat id,
+   set `BOT_TOKEN` and `CHAT_ID` on Render, set `ENVIRONMENT=production`,
+   then submit one real test inquiry and confirm it arrives in Telegram.
 
-## Motion & Blueprint Line System
+Custom domain (when purchased): Cloudflare Pages → Custom domains; then
+enable the commented canonical/OG lines in `frontend/index.html`.
 
-- **Scroll-reveal**: sections and text fade/slide into view the first time they
-  enter the viewport (`src/utils/scrollReveal.ts`). Already-seen content is
-  shown immediately on re-render instead of re-animating.
-- **Blueprint connector lines** (`src/utils/blueprintLines.ts`): a single
-  continuous vertical "trunk" line runs from the bottom of the Hero section
-  down through Services and Approach, getting thinner the further it travels
-  from the Hero. At each section heading it branches off with a medium-width
-  plain line pointing at the heading; at each individual service/step it
-  branches off with a thin plain line pointing at that item. No arrowheads —
-  plain strokes only. As the user scrolls, each segment "draws" itself in
-  sync with scroll position — like a pen sketching a blueprint — via SVG
-  `stroke-dasharray`/`dashoffset`. A glowing dot ("pen tip") tracks the
-  current drawing position.
-  - Disabled entirely below an 860px viewport width (the effect only makes
-    sense alongside the desktop/tablet layout).
-  - Fully respects `prefers-reduced-motion`: the whole line renders instantly,
-    fully drawn, with no scroll-linked animation.
-  - Re-measures and redraws automatically on window resize and on every
-    language switch (anchor positions shift when text/direction changes).
-  - **Known limitation**: the trunk's horizontal position is currently a
-    fixed offset from the page edge and does not fully re-balance for RTL
-    beyond mirroring which side it sits on. Please visually review in
-    Persian and flag if branch lines look too long/short — this is a simple
-    constant to tune, not an architectural change.
+## IMPORTANT: Logo asset
 
-To test reduced-motion: Chrome DevTools → Rendering tab → "Emulate CSS media
-  feature prefers-reduced-motion" → `reduce`.
+The design is intentionally self-sufficient without a logo. To add one,
+place the PNG at `frontend/public/logo.png` — no other changes required
+beyond referencing it where wanted.
 
-## Phase 1 scope
+## Project status
 
-- Project scaffolding (frontend + backend)
-- i18n engine (EN default, FA toggle, no reload, dir/lang switching)
-- Header, Hero (draft copy)
-- Backend `/health` and `/contact` (mock mode + honeypot spam stub)
+Done:
+- Scroll-narrative stage (camera-pan over a continuous canvas, bilingual,
+  full RTL mirror)
+- All content sections: FAQ, Work, Contact form, footer (mobile)
+- Real contact channels wired from config
+- Per-locale SEO/meta + Open Graph + favicon
+- Type-checked build (`tsc --noEmit && vite build`), 50/50 tests green
 
-## Phase 2 scope
-
-- Services section (4 rows, draft copy)
-- Approach / How I Work section (4 steps, draft copy)
-- Scroll-reveal motion layer, accessible via `prefers-reduced-motion`
-- Blueprint connector line system: plain lines only, no arrowheads (this update)
-
-Not yet implemented (future phases): Portfolio-link, FAQ, Footer, full
-Contact form, real Telegram send, rate limiting, SEO/meta polish.
+Pending (before real traffic):
+- [ ] Backend hardening: in-memory rate limiting (~5 requests/hour per IP)
+      and a production guard that fails closed when Telegram credentials
+      are missing, instead of silently returning mock success
+- [ ] `BOT_TOKEN` / `CHAT_ID` on Render
+- [ ] Optional `frontend/public/logo.png`
+- [ ] Custom domain + canonical/OG URLs
