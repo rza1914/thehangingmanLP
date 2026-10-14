@@ -1,24 +1,13 @@
 :root {
-  --bg-primary: #0A0E17;
-  --bg-secondary: #111827;
-  --accent: #38BDF8;
-  --accent-dark: #2563EB;
-  --accent-light: #7DD3FC;
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --border-color: #1E293B;
-
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-sans-fa: "Vazirmatn", "Tahoma", sans-serif;
-
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --max-width: 1180px;
-
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2rem;
-  --space-6: 3rem;
-  --space-8: 4rem;
+  --bg:#000;
+  --text:#fff;
+  --dim:rgba(255,255,255,.58);
+  --dim-soft:rgba(255,255,255,.72);
+  --body:rgba(255,255,255,.78);
+  --hair:rgba(255,255,255,.22);
+  --hair-strong:rgba(255,255,255,.45);
+  --font-sans:'Jost','Vazirmatn','Helvetica Neue',Arial,sans-serif;
+  --font-fa:'Vazirmatn','Jost',sans-serif;
+  --track:.3em;
+  --ease:cubic-bezier(.22,.7,.3,1);
 }

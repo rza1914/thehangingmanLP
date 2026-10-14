@@ -44,41 +44,19 @@ Output goes to `frontend/dist`.
 
 ## The scroll-narrative stage
 
-The desktop experience is a single pinned "camera" that pans down one
-continuous SVG drawing as the user scrolls:
-
-- One `.stage-wrap` (520vh scroll band) + one sticky `.stage`.
-- One SVG canvas of 1600 × 4500 units; the `viewBox` pans from y = 0 to
-  y = 3600 with scroll progress. The narrative is never cut into separate
-  screens — it is one continuous drawing.
-- Every line and text gets its draw window derived from its canvas Y
-  (`lineWin()` / `textWin()` in `src/components/stage.ts`), so drawing tips
-  stay just ahead of the viewport's bottom edge: lines are drawn *by* the
-  scroll, never static.
-- A glowing pen tip rides the trunk segment currently being drawn.
-- The narrative, in canvas order:
-  1. **Hero** — the brand title writes itself, the hero line draws, three
-     hanging teaser lines carry the value props, the trunk (V1) hangs from
-     the very top edge.
-  2. **WHO I AM** — thin lines off the trunk, words along them.
-  3. **HOW I WORK** — the trunk continues as V2, crossing H2/H3; steps on
-     thin lines.
-  4. **WHAT I BUILD** — a horizontal rail with four sketch-drawn service
-     boxes hanging from it.
-  5. **START A PROJECT** — base line, CTA, six channel lines rising from
-     it, and the footer hairline with descending tagline/copyright.
-- The trunk is one continuous line from the top edge to the base line.
-- **RTL / Persian**: the whole composition is mirrored (via the `X()`
-  helper), text directions are set explicitly, typography switches to
-  Vazirmatn. Switching languages re-renders the stage without a reload.
-- **Mobile (< 820px)**: the stage is hidden; a semantic text page is shown
-  instead (hero, services, approach, FAQ, work, contact form, footer).
-- **prefers-reduced-motion**: the canvas renders fully drawn; scrolling
-  pans the camera with no animation. To test: Chrome DevTools → Rendering
-  tab → "Emulate CSS media feature prefers-reduced-motion" → `reduce`.
-- **Pacing**: the total scroll length is one CSS value —
-  `.stage-wrap{height:520vh}` in `src/styles/components.css`.
-  Lower = faster narrative, higher = slower. Nothing else needs changing.
+- Three 1600×900 frames on one continuous 1600×2700 canvas: the camera
+  dwells on each frame, then glides softly to the next through the glide
+  windows (`CAM` in `src/components/stage.ts`).
+- Behind the lines sit the dimmed portfolio slots (`config.portfolio`),
+  drifting with parallax; an empty `src` renders a placeholder frame
+  with its label.
+- The whole rhythm is one number: `.stage-wrap{height:900vh}` in
+  `src/styles/components.css`.
+- Services and Approach render below the stage at every viewport width.
+- Mobile (<820px): a simplified centered "credits cut" of the same narrative —
+  a margin spine draws through the whole scroll with the pen riding it; 450vh total.
+- Portfolio slots scale and brighten on hover/focus. Disabled for touch and
+  reduced-motion users.
 
 ### Header navigation
 
@@ -97,8 +75,6 @@ their test files in one commit.
 
 - **FAQ** — accessible accordion: first item open by default, keyboard
   operable, instant open under reduced motion.
-- **Work** — a single GitHub row; no fabricated projects. A commented
-  template inside `work.ts` shows how to add a real project later.
 - **Contact form** — name / email / message (+ hidden honeypot, + locale).
   Client-side validation with inline bilingual errors; POSTs to
   `${VITE_API_BASE_URL}/contact`; 15s AbortController timeout to tolerate
@@ -106,6 +82,9 @@ their test files in one commit.
 - **Footer** — mobile only. On desktop the footer is the stage's final
   beat (hairline + descending tagline/copyright). Hidden via
   `@media (min-width:821px){.site-footer{display:none}}`.
+
+> **Services** and **Approach** now live inside the scroll narrative itself
+> (the "WHAT I BUILD" and "HOW I WORK" frames on the stage).
 
 ## i18n
 
@@ -161,13 +140,21 @@ pytest -v
 | BOT_TOKEN | No (mock mode if absent) | Telegram bot token |
 | CHAT_ID | No (mock mode if absent) | Telegram chat id to receive messages |
 | ALLOWED_ORIGINS | Yes in production | Comma-separated list of allowed CORS origins |
-| ENVIRONMENT | No | development / production (informational) |
+| ENVIRONMENT | No | development / production (controls CORS wildcard and production guard) |
 
 If `BOT_TOKEN`/`CHAT_ID` are not set, `/contact` runs in **mock mode**: it
 logs the submission server-side and returns success instead of calling
 Telegram. ⚠️ Do not serve real traffic in mock mode — set the Telegram
 credentials and `ENVIRONMENT=production` before sharing the site widely,
 or inquiries will be logged but never delivered.
+
+### Hardening (applied)
+
+- **Rate limit**: 5 requests/hour per IP (in-memory sliding window; resets on restart)
+- **Production guard**: Without `BOT_TOKEN`/`CHAT_ID` in production (`ENVIRONMENT=production`), `/contact` returns **503** (fail-closed) instead of mock success
+- **CORS**: `ALLOWED_ORIGINS` supports `/*`, `allow-all`, `*` as wildcard only in `development`
+- **Honeypot**: Hidden form field; if filled → silent 200 OK (no signal to bots)
+- **Validation**: `name` (1-100), `email` (EmailStr), `message` (1-2000), `honeypot` (0-200), `locale` (`en`|`fa`)
 
 ## Deploy
 

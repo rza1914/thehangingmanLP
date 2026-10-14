@@ -8,14 +8,15 @@ describe("Header component", () => {
     document.body.innerHTML = "";
   });
 
-  it("renders the brand name and nav links", () => {
+  it("renders the brand name and nav buttons", () => {
     const i18n = new I18nStore("en");
     i18n.init();
     const header = renderHeader(i18n);
 
     expect(header.textContent).toContain("The Hanging Man");
-    expect(header.querySelector('a[href="#services"]')).toBeTruthy();
-    expect(header.querySelector('a[href="#contact"]')).toBeTruthy();
+    expect(header.querySelector('button[data-nav="about"]')).toBeTruthy();
+    expect(header.querySelector('button[data-nav="process"]')).toBeTruthy();
+    expect(header.querySelector('button[data-nav="contact"]')).toBeTruthy();
   });
 
   it("toggles language when the language switch button is clicked", () => {
@@ -30,6 +31,8 @@ describe("Header component", () => {
 
     expect(i18n.getLocale()).toBe("fa");
     expect(document.documentElement.dir).toBe("rtl");
-    expect(header.textContent).toContain("خدمات");
+    expect(header.textContent).toContain("درباره");
+    expect(header.textContent).toContain("روند کار");
+    expect(header.textContent).toContain("تماس");
   });
 });

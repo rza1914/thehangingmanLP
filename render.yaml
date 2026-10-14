@@ -12,6 +12,6 @@ services:
       - key: CHAT_ID
         sync: false
       - key: ALLOWED_ORIGINS
-        value: "http://localhost:5173"
+        sync: false
       - key: ENVIRONMENT
-        value: "production"
+        sync: false

@@ -81,6 +81,17 @@ export class I18nStore {
     this.dict = getDictionary(locale);
     storeLocale(locale);
     applyDocumentDirection(this.dict);
+    // Update SEO meta tags
+    const setMeta = (attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.head.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute('content', content);
+    };
+    document.title = t(this.dict, 'doc.title');
+    setMeta('name', 'description', t(this.dict, 'doc.desc'));
+    setMeta('property', 'og:title', t(this.dict, 'doc.title'));
+    setMeta('property', 'og:description', t(this.dict, 'doc.desc'));
+    setMeta('property', 'og:locale', locale === 'fa' ? 'fa_IR' : 'en');
     this.listeners.forEach((listener) => listener(this.locale, this.dict));
   }
 

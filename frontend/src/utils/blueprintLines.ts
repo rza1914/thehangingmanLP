@@ -256,7 +256,16 @@ export class BlueprintLines {
     });
 
     const isRtl = document.documentElement.dir === "rtl";
-    const trunkX = isRtl ? wrapperRect.width - 32 : 32;
+    const mainRect = document.querySelector('main, #root, .app')?.getBoundingClientRect();
+    const gutter = 32;
+    let trunkX: number;
+    if (isRtl) {
+      // RTL: position trunk from the opposite side of the main content area
+      trunkX = mainRect ? mainRect.left + gutter : wrapperRect.width - gutter;
+    } else {
+      // LTR: position trunk from the start of the main content area
+      trunkX = mainRect ? mainRect.left + gutter : gutter;
+    }
 
     const segments = buildBlueprintSegments(heroAnchor, this.groups, anchorsById, trunkX);
 

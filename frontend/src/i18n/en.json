@@ -7,15 +7,17 @@
       "approach": "Approach",
       "portfolio": "Portfolio",
       "faq": "FAQ",
-      "contact": "Contact"
+      "contact": "Contact",
+      "about": "About",
+      "process": "Process"
     },
     "cta": "Get in touch",
     "langSwitch": "فارسی"
   },
   "hero": {
+    "hint": "SCROLL",
+    "srLead": "Independent software developer. I build software alone, carefully, and on time.",
     "eyebrow": "Independent Software Developer",
-    "headline": "I build software. Alone, carefully, and on time.",
-    "subheadline": "No agency, no sales team, no inflated promises — just one developer who writes the code, talks to you directly, and stands behind every line of it.",
     "cta": "Let's talk about your project"
   },
   "services": {
@@ -61,5 +63,119 @@
         "description": "You get working software, documentation, and a direct line to me if something needs fixing after launch."
       }
     ]
+  },
+  "faq": {
+    "heading": "COMMON QUESTIONS",
+    "items": [
+      {
+        "q": "What kinds of projects do you take on?",
+        "a": "Web applications, backends and APIs, and automation. I work best on small-to-medium projects with a clear goal — the kind where one careful developer is exactly the right team size."
+      },
+      {
+        "q": "How do pricing and timelines work?",
+        "a": "Every project starts with a short discovery call. After that you receive a written scope, timeline and fixed price — before any work begins. The price doesn't move unless the scope does."
+      },
+      {
+        "q": "Who actually writes the code?",
+        "a": "I do. There's no agency behind this site and nothing is handed off. The person who scopes your project is the person who builds it and stands behind it."
+      },
+      {
+        "q": "What happens after I get in touch?",
+        "a": "We have a short call about what you need. If it's a fit, you get a written scope and price. Then I build — openly, with progress you can see — and deliver on the agreed date."
+      },
+      {
+        "q": "What about after delivery?",
+        "a": "Small fixes on delivered work are part of it. Anything beyond that — new features, changes, ongoing maintenance — becomes a new, clearly scoped piece of work."
+      }
+    ]
+  },
+  "work": {
+    "heading": "CODE & PROJECTS",
+    "lede": "Selected projects will be documented here as they're released. Until then, my public code is on GitHub.",
+    "cta": "VIEW GITHUB"
+  },
+  "footer": {
+    "tagline": "INDEPENDENT SOFTWARE DEVELOPER",
+    "rights": "All rights reserved."
+  },
+  "doc": {
+    "title": "The Hanging Man — Independent Software Developer",
+    "desc": "Independent software developer: web apps, backends and APIs, automation. One developer, clear scope and price, working software."
+  },
+  "contact": {
+    "heading": "START A PROJECT",
+    "lede": "Tell me what you need — you'll get a clear scope and price first.",
+    "form": {
+      "name": "NAME",
+      "namePh": "Your name",
+      "email": "EMAIL",
+      "emailPh": "you@example.com",
+      "message": "MESSAGE",
+      "messagePh": "What should the software do? Who is it for? Any deadline?",
+      "submit": "SEND",
+      "sending": "SENDING…",
+      "success": "Thanks — your message has been sent. I'll get back to you as soon as I can.",
+      "error": "Couldn't send your message. The server may be waking up — please try again in a few seconds, or reach me on GitHub."
+    },
+    "err": {
+      "required": "This field is required.",
+      "email": "Please enter a valid email address.",
+      "message": "Please add a few more details (at least 10 characters)."
+    },
+    "channels": {
+      "github": "GITHUB",
+      "telegram": "TELEGRAM",
+      "whatsapp": "WHATSAPP",
+      "email": "EMAIL",
+      "x": "X",
+      "phone": "CALL"
+    }
+  },
+  "stage": {
+    "srLead": "Independent software developer. I build software alone, carefully, and on time.",
+    "ariaLabel": "The Hanging Man, independent software developer. A line hangs from the top of the page; straight lines cross it and lead from who I am, to how I work, to starting a project.",
+    "hint": "SCROLL",
+    "foot": "INDEPENDENT SOFTWARE DEVELOPER",
+    "who": "WHO I AM",
+    "how": "HOW I WORK",
+    "about1": "One developer. No agency, no sales team,",
+    "about2": "no inflated promises.",
+    "about3": "I write the code, talk to you directly,",
+    "about4": "and stand behind every line of it.",
+    "about5": "Web apps, backends and APIs, automation,",
+    "about6": "and an honest opinion on your codebase.",
+    "step1h": "Discovery call",
+    "step1d": "We talk about what you actually need. No obligation.",
+    "step2h": "Scope, timeline and price",
+    "step2d": "Clear, before you commit.",
+    "step3h": "Build in the open",
+    "step3d": "Regular updates as I build, not just a final reveal.",
+    "step4h": "Delivery and support",
+    "step4d": "Working software, docs, and a direct line to me.",
+    "step1": "Discovery call",
+    "step2": "Scope, timeline and price",
+    "step3": "Build in the open, then deliver",
+    "cta": "Start a project",
+    "ctaDesc": "Tell me what you need. You get a clear scope and price first.",
+    "ctaDesc1": "Tell me what you need. You get a clear scope,",
+    "ctaDesc2": "and price first, with no obligation.",
+    "sub": "CUSTOM WEB DEVELOPMENT & AI AUTOMATION",
+    "teaser1": "One developer",
+    "teaser2": "Clear scope, fixed price",
+    "teaser3": "Working software",
+    "build": "WHAT I BUILD",
+    "s1t": "Web Applications",
+    "s1d": "Front to back, custom-built",
+    "s1m": "React · TypeScript",
+    "s2t": "Backends & APIs",
+    "s2d": "FastAPI · databases · integrations",
+    "s2m": "Python · FastAPI",
+    "s3t": "Automation",
+    "s3d": "Bots, pipelines, workflows",
+    "s3m": "Telegram API · RAG",
+    "s4t": "Technical Consulting",
+    "s4d": "Reviews, architecture, advice",
+    "s4m": "Code review · Architecture",
+    "rights": "All rights reserved."
   }
 }

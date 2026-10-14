@@ -1,8 +1,8 @@
 import logging
+import os
 
 import httpx
 
-from app.core.config import settings
 from app.models.contact import ContactRequest
 
 logger = logging.getLogger("thehangingman.telegram")
@@ -23,6 +23,18 @@ def format_message(payload: ContactRequest) -> str:
     )
 
 
+def _telegram_configured() -> bool:
+    return bool(os.getenv("BOT_TOKEN")) and bool(os.getenv("CHAT_ID"))
+
+
+def _bot_token() -> str:
+    return os.getenv("BOT_TOKEN", "")
+
+
+def _chat_id() -> str:
+    return os.getenv("CHAT_ID", "")
+
+
 async def send_contact_message(payload: ContactRequest) -> bool:
     """
     Sends the contact message via the Telegram Bot API.
@@ -36,14 +48,14 @@ async def send_contact_message(payload: ContactRequest) -> bool:
     """
     text = format_message(payload)
 
-    if not settings.telegram_configured:
+    if not _telegram_configured():
         logger.info("MOCK MODE (no Telegram credentials configured) - message not sent. Content:\n%s", text)
         return True
 
-    url = TELEGRAM_API_URL.format(token=settings.bot_token)
+    url = TELEGRAM_API_URL.format(token=_bot_token())
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(url, json={"chat_id": settings.chat_id, "text": text})
+            response = await client.post(url, json={"chat_id": _chat_id(), "text": text})
             response.raise_for_status()
     except httpx.HTTPError as exc:
         logger.error("Telegram delivery failed: %s", exc)

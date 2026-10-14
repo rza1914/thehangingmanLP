@@ -13,7 +13,12 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+        """Parse comma-separated origins. In development, '/*' or 'allow-all' enables wildcard."""
+        env = self.environment.strip().lower()
+        raw = self.allowed_origins.strip()
+        if env == "development" and raw in ("/*", "allow-all", "*"):
+            return ["*"]
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     @property
     def telegram_configured(self) -> bool:

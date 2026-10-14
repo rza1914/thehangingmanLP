@@ -13,28 +13,17 @@ export function renderHeader(i18n: I18nStore): HTMLElement {
     header.innerHTML = `
       <div class="site-header__inner">
         <a href="#top" class="site-header__brand" aria-label="${t(dict, "header.brand")}">
-          <img
-            src="/logo.png"
-            alt="${t(dict, "header.brand")}"
-            class="site-header__logo"
-            width="40"
-            height="40"
-            onerror="this.style.display='none'"
-          />
           <span class="site-header__brand-name">${t(dict, "header.brand")}</span>
         </a>
-        <nav class="site-header__nav" aria-label="Primary">
-          <a href="#services">${t(dict, "header.nav.services")}</a>
-          <a href="#approach">${t(dict, "header.nav.approach")}</a>
-          <a href="#portfolio">${t(dict, "header.nav.portfolio")}</a>
-          <a href="#faq">${t(dict, "header.nav.faq")}</a>
-          <a href="#contact">${t(dict, "header.nav.contact")}</a>
-        </nav>
-        <div class="site-header__actions">
+        <div class="site-header__end">
+          <nav class="site-header__nav" aria-label="Primary">
+            <button type="button" class="site-header__nav-btn" data-nav="about">${t(dict, "header.nav.about")}</button>
+            <button type="button" class="site-header__nav-btn" data-nav="process">${t(dict, "header.nav.process")}</button>
+            <button type="button" class="site-header__nav-btn" data-nav="contact">${t(dict, "header.nav.contact")}</button>
+          </nav>
           <button type="button" class="lang-switch" id="lang-switch" aria-label="Switch language">
             ${t(dict, "header.langSwitch")}
           </button>
-          <a href="#contact" class="btn btn--primary site-header__cta">${t(dict, "header.cta")}</a>
         </div>
       </div>
     `;

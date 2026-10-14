@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Literal
 
 
 class ContactRequest(BaseModel):
@@ -6,12 +7,7 @@ class ContactRequest(BaseModel):
     email: EmailStr
     message: str = Field(..., min_length=1, max_length=2000)
     honeypot: str = Field(default="", max_length=200)
-    locale: str = Field(default="en")
-
-    @field_validator("locale")
-    @classmethod
-    def normalize_locale(cls, value: str) -> str:
-        return value if value in ("en", "fa") else "en"
+    locale: Literal["en", "fa"] = "en"
 
 
 class ContactResponse(BaseModel):

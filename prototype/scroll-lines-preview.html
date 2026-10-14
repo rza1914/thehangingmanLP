@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prototype — Pinned Scroll + Blueprint Lines (NOT production code)</title>
+<style>
+  :root {
+    --bg: #0A0E17;
+    --bg2: #111827;
+    --accent: #38BDF8;
+    --accent-dark: #2563EB;
+    --accent-light: #7DD3FC;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --border: #1E293B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:var(--bg); color:var(--text); font-family: system-ui, sans-serif; }
+
+  .proto-banner {
+    position: fixed; top:0; left:0; right:0; z-index: 999;
+    background: #7c2d12; color:#fff; text-align:center;
+    font-size: 12px; padding: 4px; letter-spacing: 0.03em;
+  }
+
+  .skip-bar {
+    position: fixed; top: 28px; right: 16px; z-index: 999;
+  }
+  .skip-bar button {
+    background: var(--bg2); color: var(--text); border:1px solid var(--border);
+    padding: 8px 14px; border-radius: 8px; cursor:pointer; font-size: 13px;
+  }
+  .skip-bar button:hover { border-color: var(--accent); color: var(--accent-light); }
+
+  /* ===== Pin wrapper pattern =====
+     Each wrapper is TALL (e.g. 300vh). Inside it, .pin-inner is
+     `position: sticky; top:0; height:100vh`, so it visually stays
+     fixed on screen while the user scrolls through the wrapper's
+     extra height. We read the wrapper's scroll position every frame
+     to get a 0->1 "local progress" value, which drives the line
+     drawing and content reveal. Once progress reaches 1, the sticky
+     panel naturally unpins and normal scrolling continues into the
+     next wrapper. No animation library needed for this core effect. */
+  .pin-wrapper { position: relative; }
+  .pin-inner {
+    position: sticky; top: 0; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  body.simple-mode .pin-wrapper { height: auto !important; }
+  body.simple-mode .pin-inner { position: relative; height: auto; padding: 100px 20px; }
+
+  .panel { position: relative; width: 100%; max-width: 900px; padding: 0 24px; z-index: 1; }
+  .line-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: visible;
+  }
+  .line-svg path { fill: none; transition: stroke-dashoffset 0.05s linear; }
+  body.simple-mode .line-svg path { transition: none; }
+  .beam-trunk { stroke: var(--accent-dark); opacity: 0.9; }
+  .beam-heading { stroke: var(--accent); opacity: 1; }
+  .beam-item { stroke: var(--accent-light); opacity: 0.85; pointer-events: stroke; cursor: pointer; }
+  .beam-item:hover { stroke-width: 6 !important; filter: drop-shadow(0 0 10px rgba(125,211,252,0.9)); }
+  .pen-dot { fill: var(--accent-light); filter: drop-shadow(0 0 10px rgba(125,211,252,0.9)) drop-shadow(0 0 20px rgba(56,189,248,0.6)); }
+
+  .eyebrow { display:block; color: var(--accent-light); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; }
+  h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin: 0 0 16px; }
+  h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 40px; }
+  p.sub { color: var(--text2); font-size: 1.05rem; max-width: 600px; margin: 0 0 20px; }
+
+  .items { list-style:none; padding:0; margin: 0; padding-left: 140px; }
+  .items li {
+    padding: 22px 0; opacity: 0; transform: translateX(18px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  body.simple-mode .items li { opacity: 1; transform:none; transition:none; }
+  .items li.revealed { opacity: 1; transform: translateX(0); }
+  .items li h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  .items li p { margin:0; color: var(--text2); font-size: 0.95rem; }
+
+  .hero-panel { text-align: center; }
+  .hero-panel .items { padding-left: 0; }
+
+  .scroll-hint {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    color: var(--text2); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    opacity: 0.7; transition: opacity 0.4s ease;
+  }
+  body.simple-mode .scroll-hint { display:none; }
+  .scroll-hint span { display:inline-block; animation: bounce 1.6s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(6px);} }
+
+  footer { height: 40vh; display:flex; align-items:center; justify-content:center; color: var(--text2); border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="proto-banner">THROWAWAY PROTOTYPE — not wired into the real site. For visual/feel review only.</div>
+<div class="skip-bar"><button id="skipBtn">Skip animation (simple view)</button></div>
+
+<!-- ===================== HERO (pinned) ===================== -->
+<div class="pin-wrapper" id="wrap-hero" style="height:220vh;">
+  <div class="pin-inner">
+    <section class="panel hero-panel">
+      <svg class="line-svg" id="svg-hero"></svg>
+      <span class="eyebrow">Independent Software Developer</span>
+      <h1>I build software. Alone, carefully, and on time.</h1>
+      <p class="sub" style="margin-left:auto;margin-right:auto;">No agency, no sales team, no inflated promises — just one developer who writes the code, talks to you directly, and stands behind every line of it.</p>
+      <div class="scroll-hint" id="hint-hero">keep scrolling <span>⌄</span></div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== SERVICES (pinned) ===================== -->
+<div class="pin-wrapper" id="wrap-services" style="height:320vh;">
+  <div class="pin-inner">
+    <section class="panel">
+      <svg class="line-svg" id="svg-services"></svg>
+      <h2 id="services-heading">Services</h2>
+      <ul class="items" id="services-list">
+        <li data-index="0"><h3>Web Application Development</h3><p>Responsive, fast, maintainable apps — from the first line of code to deployment.</p></li>
+        <li data-index="1"><h3>Backend & API Development</h3><p>Reliable systems and APIs your product can depend on.</p></li>
+        <li data-index="2"><h3>Automation & Integrations</h3><p>Connecting tools so repetitive tasks disappear.</p></li>
+        <li data-index="3"><h3>Technical Consulting & Code Review</h3><p>A straight, honest opinion on your codebase — no upselling.</p></li>
+      </ul>
+      <div class="scroll-hint" id="hint-services">keep scrolling <span>⌄</span></div>
+    </section>
+  </div>
+</div>
+
+<!-- ===================== APPROACH (pinned) ===================== -->
+<div class="pin-wrapper" id="wrap-approach" style="height:320vh;">
+  <div class="pin-inner">
+    <section class="panel">
+      <svg class="line-svg" id="svg-approach"></svg>
+      <h2 id="approach-heading">How I Work</h2>
+      <ul class="items" id="approach-list">
+        <li data-index="0"><h3>01 — Discovery Call</h3><p>We talk about what you actually need. No obligation.</p></li>
+        <li data-index="1"><h3>02 — Scope & Estimate</h3><p>Clear scope, timeline and price before any commitment.</p></li>
+        <li data-index="2"><h3>03 — Build in the Open</h3><p>Regular updates as I build, not just a final reveal.</p></li>
+        <li data-index="3"><h3>04 — Delivery & Support</h3><p>Working software, docs, and a direct line to me.</p></li>
+      </ul>
+      <div class="scroll-hint" id="hint-approach">keep scrolling <span>⌄</span></div>
+    </section>
+  </div>
+</div>
+
+<footer>↓ Normal Contact / Footer section would continue here (not part of this prototype) ↓</footer>
+
+<script>
+/* ============================================================
+   PROTOTYPE LOGIC ONLY — simplified version of the real
+   src/utils/blueprintLines.ts math, adapted for PER-SECTION
+   pinned-scroll progress instead of whole-page scroll progress.
+   Not production code: no i18n, no bundler, no tests.
+   ============================================================ */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function prefersReducedMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function isMobile() { return window.innerWidth <= 860; }
+
+let simpleMode = prefersReducedMotion() || isMobile();
+
+function applySimpleModeClass() {
+  document.body.classList.toggle('simple-mode', simpleMode);
+}
+applySimpleModeClass();
+
+document.getElementById('skipBtn').addEventListener('click', () => {
+  simpleMode = !simpleMode;
+  applySimpleModeClass();
+  buildAll();
+});
+window.addEventListener('resize', () => {
+  simpleMode = prefersReducedMotion() || isMobile() || document.body.classList.contains('simple-mode') && simpleMode;
+  buildAll();
+});
+
+// ---- pure math, mirrors blueprintLines.ts ----
+function computeLocalProgress(wrapper) {
+  const rect = wrapper.getBoundingClientRect();
+  const total = rect.height - window.innerHeight;
+  if (total <= 0) return 1;
+  const scrolled = -rect.top;
+  return Math.min(1, Math.max(0, scrolled / total));
+}
+function computeDrawWindow(midY, panelHeight, windowSize) {
+  windowSize = windowSize || 0.16;
+  if (panelHeight <= 0) return [0, 1];
+  const ratio = Math.min(1, Math.max(0, midY / panelHeight));
+  return [Math.max(0, ratio - windowSize/2), Math.min(1, ratio + windowSize/2)];
+}
+function computeSegmentDrawProgress(global, start, end) {
+  if (end <= start) return global >= start ? 1 : 0;
+  return Math.min(1, Math.max(0, (global - start) / (end - start)));
+}
+
+// ---- a self-contained blueprint panel controller ----
+function createPanelBlueprint(opts) {
+  const wrapper = document.getElementById(opts.wrapperId);
+  const panel = wrapper.querySelector('.panel');
+  const svg = document.getElementById(opts.svgId);
+  const headingEl = opts.headingId ? document.getElementById(opts.headingId) : null;
+  const listEl = opts.listId ? document.getElementById(opts.listId) : null;
+  const hintEl = opts.hintId ? document.getElementById(opts.hintId) : null;
+  let segments = [];
+  let penDot;
+
+  function measure() {
+    svg.innerHTML = '';
+    const panelRect = panel.getBoundingClientRect();
+    svg.setAttribute('width', panelRect.width);
+    svg.setAttribute('height', panelRect.height);
+    svg.setAttribute('viewBox', `0 0 ${panelRect.width} ${panelRect.height}`);
+
+    segments = [];
+    const trunkX = 60;
+    const stopsY = [0];
+
+    if (headingEl) {
+      const hr = headingEl.getBoundingClientRect();
+      const headingY = hr.top - panelRect.top + hr.height/2;
+      stopsY.push(headingY);
+      segments.push({ level:'heading', midY: headingY, points:[[trunkX, headingY],[hr.left - panelRect.left, headingY]], width:4.5 });
+    }
+
+    if (listEl) {
+      Array.from(listEl.children).forEach((li) => {
+        const r = li.getBoundingClientRect();
+        const y = r.top - panelRect.top + r.height/2;
+        stopsY.push(y);
+        segments.push({ level:'item', midY: y, points:[[trunkX, y],[r.left - panelRect.left, y]], width:2.5, hit: li.dataset.index });
+      });
+    } else {
+      // hero: single short trunk stub below the text block
+      stopsY.push(panelRect.height * 0.9);
+    }
+
+    // trunk segments connecting stops in order, tapering thinner with distance
+    const trunkSegs = [];
+    for (let i = 0; i < stopsY.length - 1; i++) {
+      trunkSegs.push({
+        level:'trunk', midY:(stopsY[i]+stopsY[i+1])/2,
+        points:[[trunkX, stopsY[i]],[trunkX, stopsY[i+1]]],
+        width: Math.max(7 - i*0.6, 2.5)
+      });
+    }
+
+    const allSegs = trunkSegs.concat(segments);
+    segments = allSegs.map((s, idx) => {
+      const path = document.createElementNS(SVG_NS, 'path');
+      const [[x1,y1],[x2,y2]] = s.points;
+      path.setAttribute('d', `M${x1},${y1} L${x2},${y2}`);
+      path.setAttribute('stroke-width', s.width);
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('class', `beam-${s.level}`);
+      svg.appendChild(path);
+      const len = path.getTotalLength ? path.getTotalLength() : 0;
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = simpleMode ? 0 : len;
+      return { ...s, path, length: len, panelHeight: panelRect.height };
+    });
+
+    penDot = document.createElementNS(SVG_NS, 'circle');
+    penDot.setAttribute('r', 5);
+    penDot.setAttribute('class', 'pen-dot');
+    svg.appendChild(penDot);
+  }
+
+  function update() {
+    const progress = simpleMode ? 1 : computeLocalProgress(wrapper);
+    let penX = 0, penY = 0;
+    segments.forEach((s) => {
+      const [start, end] = computeDrawWindow(s.midY, s.panelHeight);
+      const segProgress = simpleMode ? 1 : computeSegmentDrawProgress(progress, start, end);
+      s.path.style.strokeDashoffset = s.length * (1 - segProgress);
+      if (segProgress > 0.01) {
+        penY = s.midY;
+        const d = s.path.getAttribute('d');
+        const m = d.match(/M([\d.]+),/);
+        if (m) penX = Number(m[1]);
+      }
+      if (s.hit !== undefined && segProgress > 0.4 && listEl) {
+        const li = listEl.querySelector(`[data-index="${s.hit}"]`);
+        if (li) li.classList.add('revealed');
+      }
+    });
+    penDot.setAttribute('cx', penX);
+    penDot.setAttribute('cy', penY);
+    if (hintEl) hintEl.style.opacity = progress > 0.9 ? 0 : 0.7;
+  }
+
+  return { measure, update };
+}
+
+const panels = [
+  createPanelBlueprint({ wrapperId:'wrap-hero', svgId:'svg-hero', hintId:'hint-hero' }),
+  createPanelBlueprint({ wrapperId:'wrap-services', svgId:'svg-services', headingId:'services-heading', listId:'services-list', hintId:'hint-services' }),
+  createPanelBlueprint({ wrapperId:'wrap-approach', svgId:'svg-approach', headingId:'approach-heading', listId:'approach-list', hintId:'hint-approach' })
+];
+
+function buildAll() {
+  applySimpleModeClass();
+  panels.forEach(p => p.measure());
+  panels.forEach(p => p.update());
+}
+
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (ticking) return;
+  ticking = true;
+  requestAnimationFrame(() => { panels.forEach(p => p.update()); ticking = false; });
+}, { passive:true });
+
+buildAll();
+</script>
+</body>
+</html>

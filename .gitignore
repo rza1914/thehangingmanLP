@@ -5,3 +5,9 @@ dist/
 __pycache__/
 *.pyc
 .venv/
+
+# Backend
+backend/.env
+backend/.venv/
+backend/__pycache__/
+backend/.pytest_cache/

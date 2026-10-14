@@ -4,11 +4,11 @@ import "./styles/components.css";
 
 import { I18nStore } from "./i18n/i18n";
 import { renderHeader } from "./components/header";
-import { renderHero } from "./components/hero";
-import { renderServices } from "./components/services";
-import { renderApproach } from "./components/approach";
-import { BlueprintLines } from "./utils/blueprintLines";
+import { renderStage } from "./components/stage";
+import { renderFaq } from "./components/faq";
+import { renderContact } from "./components/contact";
 import { config } from "./config";
+import { initDepthField } from "./components/depthField";
 
 function bootstrap(): void {
   const app = document.getElementById("app");
@@ -16,34 +16,36 @@ function bootstrap(): void {
     throw new Error("Root element #app not found");
   }
 
+  initDepthField();
+
   const i18n = new I18nStore(config.defaultLocale);
   i18n.init();
 
   app.appendChild(renderHeader(i18n));
 
-  const blueprintZone = document.createElement("div");
-  blueprintZone.id = "blueprint-zone";
+  /* ---- stage host ---- */
+  const stageHost = document.createElement("div");
+  stageHost.className = "stage-host";
+  app.appendChild(stageHost);
+  renderStage(i18n, stageHost);
 
-  const hero = renderHero(i18n);
-  const services = renderServices(i18n);
-  const approach = renderApproach(i18n);
+  /* the stage hands off to the content — one thin fading line */
+  const stageExit = document.createElement("div");
+  stageExit.className = "stage-exit";
+  stageExit.setAttribute("aria-hidden", "true");
+  app.appendChild(stageExit);
 
-  blueprintZone.appendChild(hero);
-  blueprintZone.appendChild(services);
-  blueprintZone.appendChild(approach);
+  /* ---- remaining sections ---- */
+  app.appendChild(renderFaq(i18n));
+  app.appendChild(renderContact(i18n));
 
-  app.appendChild(blueprintZone);
-
-  const groups = [
-    { headingId: "services-heading", itemIds: ["service-row-0", "service-row-1", "service-row-2", "service-row-3"] },
-    { headingId: "approach-heading", itemIds: ["approach-step-0", "approach-step-1", "approach-step-2", "approach-step-3"] }
-  ];
-
-  const blueprint = new BlueprintLines(blueprintZone, groups);
-
-  i18n.onChange(() => {
-    blueprint.recompute();
-  });
+  if (matchMedia('(hover:hover) and (pointer:fine)').matches) {
+    const spot = document.getElementById('atmSpot');
+    addEventListener('pointermove', (e) => {
+      spot?.style.setProperty('--mx', e.clientX + 'px');
+      spot?.style.setProperty('--my', e.clientY + 'px');
+    }, { passive: true });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", bootstrap);
