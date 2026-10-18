@@ -37,7 +37,7 @@ export function renderFaq(i18n: I18nStore): HTMLElement {
 
     section.innerHTML = `
       <div class="faq__inner">
-        <h2 class="section-heading" data-blueprint-anchor="faq-heading">${t(dict, "faq.heading")}</h2>
+        <h2 class="section-heading">${t(dict, "faq.heading")}</h2>
         <div class="faq-list">
           ${renderItems}
         </div>

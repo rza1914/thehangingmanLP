@@ -12,7 +12,7 @@ export function renderWork(i18n: I18nStore): HTMLElement {
 
     section.innerHTML = `
       <div class="work__inner">
-        <h2 class="section-heading" data-blueprint-anchor="work-heading">${t(dict, "work.heading")}</h2>
+        <h2 class="section-heading">${t(dict, "work.heading")}</h2>
         <p class="work__lede">${t(dict, "work.lede")}</p>
         <a class="work-row" href="${config.githubUrl}" target="_blank" rel="noopener">
           <span class="work-row__cta">${t(dict, "work.cta")}</span>

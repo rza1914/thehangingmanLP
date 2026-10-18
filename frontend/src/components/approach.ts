@@ -25,7 +25,7 @@ export function renderApproach(i18n: I18nStore): HTMLElement {
             <div class="row-divider" aria-hidden="true" style="--line-start:${v.startPercent}%; --line-end:${v.endPercent}%;">
               <span class="row-divider__jog row-divider__jog--${v.jogSide}" style="--jog-height:${v.jogHeight}px; --jog-grow:${v.jogGrowHeight}px;"></span>
             </div>
-            <article class="approach-step" data-blueprint-anchor="approach-step-${index}">
+            <article class="approach-step">
               <span class="approach-step__number">${String(index + 1).padStart(2, "0")}</span>
               <div class="approach-step__content">
                 <h3 class="approach-step__title">${step.title}</h3>
@@ -42,7 +42,7 @@ export function renderApproach(i18n: I18nStore): HTMLElement {
     section.innerHTML = `
       <div class="approach__inner">
         <span class="section-eyebrow" data-reveal data-reveal-key="approach-eyebrow">${t(dict, "approach.eyebrow")}</span>
-        <h2 class="section-heading" data-reveal data-reveal-key="approach-heading" style="--reveal-delay:60ms" data-blueprint-anchor="approach-heading">${t(dict, "approach.heading")}</h2>
+        <h2 class="section-heading" data-reveal data-reveal-key="approach-heading" style="--reveal-delay:60ms">${t(dict, "approach.heading")}</h2>
         <div class="approach__steps">
           ${rowsHtml}
           <div class="row-divider row-divider--closing" aria-hidden="true" style="--line-start:${closing.startPercent}%; --line-end:${closing.endPercent}%;"></div>
