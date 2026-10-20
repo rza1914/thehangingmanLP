@@ -1,19 +1,27 @@
 import { I18nStore } from "../i18n/i18n";
 import { t } from "../i18n/i18n";
+import type { Dict } from "../i18n/i18n";
 import { config } from "../config";
+import { CONTACT_CHANNELS, isExternalHref } from "../config/contact";
+import type { ContactChannel } from "../config/contact";
+import { createScrollEngine } from "./stage-scroll";
+import { initCardInteraction } from "./stage-cards";
 
 const NS = "http://www.w3.org/2000/svg";
 
 /* module-level constants for LAYOUT export */
 const F = 900;
 const WORLD_D = 4 * F;
+/* X2 stays on the 30-unit rhythm for the LAYOUT invariant; the frame-2/3
+   vertical uses VC (= last card center) as its single source — no second line. */
 const X1 = 600, X2 = 1260, OV = 60;
+const VC = 1280;
 const H2 = F + 270;
 const H3 = 2 * F + 450;
 const RAIL = 2340;
 const BASE = 3150;
 const TOPC = 2940;
-const CAM: Array<[number, number]> = [[0.28, 0.38], [0.56, 0.66], [0.82, 0.90]];
+const CAM: Array<[number, number]> = [[0.26, 0.34], [0.54, 0.62], [0.81, 0.89]];
 const MWF = 1600, WORLD_M = 8000, PAN_M = 6400;
 
 export const LAYOUT = {
@@ -21,6 +29,7 @@ export const LAYOUT = {
     frame: F, world: WORLD_D,
     margin: { l: 120, r: 1480 },
     trunk: { x1: X1, x2: X2 },
+    v3: VC,
     h2: H2, h3: H3,
     rail: RAIL, base: BASE, topc: TOPC,
     channels: { base: X1 - 300, gap: 60, top: TOPC },
@@ -31,9 +40,7 @@ export const LAYOUT = {
   },
 } as const;
 
-type Dict = any;
-
-interface Item {
+export interface Item {
   el: SVGElement; s: number; e: number; isLine: boolean; dir?: number;
   x1?: number; y1?: number; x2?: number; y2?: number;
 }
@@ -65,7 +72,7 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
   const dict: Dict = i18n.getDict();
   const fa: boolean = dict.meta.lang === "fa";
   const calm: boolean = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const mobile: boolean = matchMedia("(max-width:820px)").matches;
+  const mobile: boolean = matchMedia("(max-width:860px)").matches;
   modeDesktop = !mobile;
 
   host.textContent = "";
@@ -78,6 +85,20 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
   const lead = document.createElement("p");
   lead.textContent = t(dict, "stage.srLead");
   sr.append(h1, lead);
+  /* semantic channel list — same config as the scene */
+  const chList = document.createElement("ul");
+  chList.className = "sr-channels";
+  CONTACT_CHANNELS.forEach((c) => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = c.href;
+    a.textContent = c.label + ": " + c.shown;
+    a.setAttribute("aria-label", c.label + " — " + c.shown);
+    if (isExternalHref(c.href)) { a.target = "_blank"; a.rel = "noopener noreferrer"; }
+    li.appendChild(a);
+    chList.appendChild(li);
+  });
+  sr.appendChild(chList);
   host.appendChild(sr);
 
   /* the stage — on mobile, a simplified centered "credits cut" of the same film */
@@ -103,13 +124,20 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
 
   const X = (x: number): number => (fa ? (mobile ? 800 : 1600) - x : x);
 
-  const cfgAny: any = config as any;
   const ch = (k: string): string => {
-    const s = cfgAny.social;
-    const v = s && typeof s === "object" ? s[k] : undefined;
-    const out = v !== undefined ? v : cfgAny[k];
-    return typeof out === "string" ? out : "";
+    const social = config.social as unknown as Record<string, string | undefined>;
+    const v = social[k];
+    if (typeof v === "string") return v;
+    if (k === "githubUrl") return config.githubUrl;
+    return "";
   };
+
+  const openUrl = (url: string): void => {
+    if (/^mailto:/.test(url) || /^tel:/.test(url)) location.href = url;
+    else window.open(url, "_blank", "noopener");
+  };
+
+  const portfolio: SlotDef[] = config.portfolio || [];
 
   const items: Item[] = [];
   const segs: Item[] = [];
@@ -136,11 +164,6 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
     el.style.direction = forceLtr ? "ltr" : fa ? "rtl" : "ltr";
     items.push({ el, s, e, isLine: false, dir });
     return el;
-  };
-
-  const openUrl = (url: string): void => {
-    if (/^mailto:/.test(url) || /^tel:/.test(url)) location.href = url;
-    else window.open(url, "_blank", "noopener");
   };
 
   if (!mobile) {
@@ -177,7 +200,7 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
     ln("th", X1, H2, 1480, H2, 0.35, 0.48);
     {
       const gH = svgEl("g", { class: "stg-grp" }, texts);
-      tx("h2", X(X2 + 30), H2 - 20, t(dict, "stage.how"), 0.42, 0.48, gH, "start");
+      tx("h2", X(VC + 30), H2 - 20, t(dict, "stage.how"), 0.42, 0.48, gH, "start");
       const steps: Array<[string, string]> = [
         ["stage.step1h", "stage.step1d"],
         ["stage.step2h", "stage.step2d"],
@@ -186,15 +209,17 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
       ];
       steps.forEach((pair, i) => {
         const y = H2 + 120 + i * 120;
-        ln("tn", X2, y, X2 - 520, y, 0.455 + i * 0.03, 0.525 + i * 0.03);
-        tx("st", X(X2 - 28), y - 16, t(dict, pair[0]), 0.475 + i * 0.03, 0.54 + i * 0.03, gH, "end");
-        tx("sd", X(X2 - 28), y + 34, t(dict, pair[1]), 0.49 + i * 0.03, 0.555 + i * 0.03, gH, "end");
+        ln("tn", VC, y, VC - 520, y, 0.345 + i * 0.035, 0.375 + i * 0.035);
+        tx("st", X(VC - 28), y - 16, t(dict, pair[0]), 0.365 + i * 0.035, 0.400 + i * 0.035, gH, "end");
+        tx("sd", X(VC - 28), y + 34, t(dict, pair[1]), 0.380 + i * 0.035, 0.425 + i * 0.035, gH, "end");
       });
     }
-    ln("th", X2, H2 - OV, X2, RAIL, 0.44, 0.64);   /* V2 crosses H2 and carries down to the rail */
+    /* NOTE: the old second vertical at X2 was deleted here. A single V3
+       vertical at VC (= last card center) crosses H2 and carries down to
+       the rail. Render stays idempotent: host is cleared on re-render. */
 
     /* ═══ glide 2 → frame 3: what I build ═══ */
-    const lastCardCenter = 1280;
+    const lastCardCenter = VC;
 
     /* thick vertical (V3) at last card center — continues below rail as that card's connector */
     ln("th", lastCardCenter, H2 - OV, lastCardCenter, RAIL, 0.44, 0.64, lines);
@@ -204,8 +229,9 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
     ln("th", lastCardCenter, RAIL, lastCardCenter + OV, RAIL, 0.60, 0.72);        /* overshoot right (EN) / left (FA) */
     ln("th", lastCardCenter, RAIL, 120, RAIL, 0.60, 0.72);                         /* to left margin (EN) / right margin (FA) */
 
-    /* section label: horizontal, above rail, aligned to line's start corner */
-    const labelX = fa ? 1480 : 120;  // right margin (FA) / left margin (EN)
+    /* section label: horizontal, fully inside the rail span — inset 30 from the
+       rail's own margin corner, derived from the same LAYOUT margins as the line */
+    const labelX = fa ? LAYOUT.desktop.margin.r - 30 : LAYOUT.desktop.margin.l + 30;
     const labelAnchor = fa ? "end" : "start";
     tx("h2", labelX, RAIL - 18, t(dict, "stage.build"), 0.60, 0.66, undefined, labelAnchor, 1, fa ? false : true);
 
@@ -224,22 +250,21 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
       const cardG = svgEl("g", { class: "stg-card" }, lines);
       const cardX = X(cx);
       const frameLeft = cardX - halfW;
-      /* skip separate connector for last card — thick vertical continues as its connector */
       if (i !== 3) {
-        ln("tn", cx, RAIL, cx, frameTop, 0.63 + i * 0.04, 0.70 + i * 0.04, cardG);
+        ln("tn", cx, RAIL, cx, frameTop, 0.625 + i * 0.028, 0.653 + i * 0.028, cardG);
       }
       const bx = svgEl("path", {
         class: "stg-ln bx",
         d: "M" + frameLeft + " " + frameTop + " h " + bw + " v " + bh + " h " + (-bw) + " Z",
         pathLength: 1,
       }, cardG);
-      items.push({ el: bx, s: 0.66 + i * 0.04, e: 0.78 + i * 0.04, isLine: true, x1: frameLeft, y1: frameTop, x2: frameLeft + bw, y2: frameTop });
-      tx("bt", cardX, frameTop + textPad + 24, t(dict, sv.t), 0.72 + i * 0.04, 0.80 + i * 0.04, cardG, "middle");
-      tx("bd", cardX, frameTop + textPad + 70, t(dict, sv.d), 0.74 + i * 0.04, 0.82 + i * 0.04, cardG, "middle");
-      tx("bm", cardX, frameTop + textPad + 114, t(dict, sv.m), 0.76 + i * 0.04, 0.84 + i * 0.04, cardG, "middle", 1, true);
+      items.push({ el: bx, s: 0.625 + i * 0.028, e: 0.653 + i * 0.028, isLine: true, x1: frameLeft, y1: frameTop, x2: frameLeft + bw, y2: frameTop });
+      tx("bt", cardX, frameTop + textPad + 24, t(dict, sv.t), 0.643 + i * 0.028, 0.675 + i * 0.028, cardG, "middle");
+      tx("bd", cardX, frameTop + textPad + 70, t(dict, sv.d), 0.657 + i * 0.028, 0.690 + i * 0.028, cardG, "middle");
+      tx("bm", cardX, frameTop + textPad + 114, t(dict, sv.m), 0.673 + i * 0.028, 0.710 + i * 0.028, cardG, "middle", 1, true);
     });
-    ln("th", 120, RAIL, 120, BASE, 0.80, 0.90);        /* the trunk drops to the final frame */
-    ln("th", 120, BASE, 1480, BASE, 0.88, 0.96);       /* the base line */
+    ln("th", 120, RAIL, 120, BASE + OV, 0.80, 0.90);    /* the trunk drops and crosses the base with OV overshoot */
+    ln("th", 120, BASE, 1480, BASE, 0.88, 0.96);       /* the base line runs inward from the trunk foot */
 
     {
       const gC = svgEl("g", { class: "stg-grp" }, texts);
@@ -248,32 +273,48 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
       tx("ds", X(X2 - 28), BASE + 138, t(dict, "stage.ctaDesc2"), 0.93, 0.97, gC, "end");
     }
 
-    const chans = [
-      { label: t(dict, "contact.channels.telegram"), url: ch("telegram") },
-      { label: t(dict, "contact.channels.whatsapp"), url: ch("whatsapp") },
-      { label: t(dict, "contact.channels.email"),    url: ch("email") },
-      { label: t(dict, "contact.channels.github"),   url: ch("githubUrl") || ch("github") },
-      { label: t(dict, "contact.channels.x"),        url: ch("x") || ch("twitter") },
-      { label: t(dict, "contact.channels.phone"),    url: ch("phone") },
-    ].filter((c) => Boolean(c.url));
+    const chans = CONTACT_CHANNELS.map((c) => ({
+      label: c.label,
+      url: c.href,
+      shown: c.shown,
+    })).filter((c) => Boolean(c.url));
     const TOP = TOPC;
+    let capIndex = -1;
+    const cap = svgEl("text", { class: "stg-cap", x: X1 - 280, y: BASE + 40, "text-anchor": "end" }, texts);
+    cap.textContent = "";
     chans.forEach((c, i) => {
       const x = X1 - 300 + i * 60;
       const line = ln("tn", x, BASE, x, TOP, 0.89 + i * 0.012, 0.93 + i * 0.012);
-      const g = svgEl("g", { class: "stg-chan", role: "link", tabindex: 0, "aria-label": c.label }, texts);
+      const g = svgEl("a", {
+        class: "stg-chan",
+        href: c.url,
+        "xlink:href": c.url,
+        tabindex: "0",
+        "aria-label": c.label + " — " + c.shown,
+        ...(/^https?:\/\//i.test(c.url) ? { target: "_blank", rel: "noopener noreferrer" } : {}),
+      }, texts);
       svgEl("rect", { x: X(x) - 28, y: TOP, width: 56, height: BASE - TOP, fill: "transparent" }, g);
       const rg = svgEl("g", { transform: "translate(" + (fa ? X(x) - 34 : X(x) + 34) + " " + (BASE - 24) + ") rotate(-90)" }, g);
       tx("ch", 0, 0, c.label, 0.90 + i * 0.012, 0.94 + i * 0.012, rg, "start", 1, true);
       const hi = (): void => { line.el.style.strokeWidth = "2"; line.el.style.opacity = "1"; };
       const lo = (): void => { line.el.style.strokeWidth = ""; line.el.style.opacity = ""; };
-      g.addEventListener("click", () => openUrl(c.url));
       g.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openUrl(c.url); }
+        if (ev.key === " ") { ev.preventDefault(); if (/^mailto:/.test(c.url) || /^tel:/.test(c.url)) location.href = c.url; else window.open(c.url, "_blank", "noopener"); }
       });
-      g.addEventListener("mouseenter", hi);
-      g.addEventListener("mouseleave", lo);
-      g.addEventListener("focus", hi);
-      g.addEventListener("blur", lo);
+      g.addEventListener("mouseenter", () => {
+        capIndex = i;
+        cap.textContent = c.shown;
+      });
+      g.addEventListener("mouseleave", () => {
+        if (capIndex === i) { capIndex = -1; cap.textContent = ""; }
+      });
+      g.addEventListener("focus", () => {
+        capIndex = i;
+        cap.textContent = c.shown;
+      });
+      g.addEventListener("blur", () => {
+        if (capIndex === i) { capIndex = -1; cap.textContent = ""; }
+      });
     });
 
     foot = svgEl("text", { class: "stg-tx stg-foot", x: X(120), y: WORLD_D - 24, "text-anchor": "start" }, texts);
@@ -281,7 +322,7 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
     foot.style.direction = fa ? "rtl" : "ltr";
 
     /* portfolio slots — behind the lines; scale up on hover/focus */
-    const PF: SlotDef[] = (cfgAny.portfolio as SlotDef[]) || [];
+    const PF: SlotDef[] = portfolio;
     PF.forEach((w) => {
       const g = svgEl("g", { class: "stg-slot" }, slotsG);
       const inner = svgEl("g", { class: "stg-slot-in" }, g);
@@ -382,26 +423,16 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
       tx("msd", 400, 6660, t(dict, "stage.ctaDesc1"), 0.89, 0.94, gC, "middle");
       tx("msd", 400, 6710, t(dict, "stage.ctaDesc2"), 0.91, 0.95, gC, "middle");
     }
-    const chans = [
-      { label: t(dict, "contact.channels.telegram"), url: ch("telegram") },
-      { label: t(dict, "contact.channels.whatsapp"), url: ch("whatsapp") },
-      { label: t(dict, "contact.channels.email"),    url: ch("email") },
-      { label: t(dict, "contact.channels.github"),   url: ch("githubUrl") || ch("github") },
-      { label: t(dict, "contact.channels.x"),        url: ch("x") || ch("twitter") },
-      { label: t(dict, "contact.channels.phone"),    url: ch("phone") },
-    ].filter((c) => Boolean(c.url));
-    chans.forEach((c, i) => {
+    /* mobile channel list — one row per channel from the same config */
+    CONTACT_CHANNELS.forEach((c, i) => {
       const y = 6900 + i * 160;
-      const line = ln("tn", 130, y, 670, y, 0.90 + i * 0.012, 0.94 + i * 0.012);
-      const g = svgEl("g", { class: "stg-chan", role: "link", tabindex: 0, "aria-label": c.label }, texts);
+      const g = svgEl("a", { class: "stg-chan", "aria-label": c.label + " — " + c.shown }, texts);
+      g.setAttribute("href", c.href);
+      if (isExternalHref(c.href)) { g.setAttribute("target", "_blank"); g.setAttribute("rel", "noopener noreferrer"); }
       svgEl("rect", { x: 90, y: y - 70, width: 620, height: 110, fill: "transparent" }, g);
-      tx("mch", 400, y - 26, c.label, 0.91 + i * 0.012, 0.95 + i * 0.012, g, "middle", 1, true);
-      g.addEventListener("click", () => openUrl(c.url));
-      g.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openUrl(c.url); }
-      });
-      line.el.addEventListener("mouseenter", () => { line.el.style.strokeWidth = "2"; line.el.style.opacity = "1"; });
-      line.el.addEventListener("mouseleave", () => { line.el.style.strokeWidth = ""; line.el.style.opacity = ""; });
+      tx("mch", 400, y - 30, c.label, 0.91 + i * 0.012, 0.95 + i * 0.012, g, "middle", 1, true);
+      tx("msd", 400, y + 18, c.shown, 0.92 + i * 0.012, 0.955 + i * 0.012, g, "middle", 1, true);
+      ln("tn", 130, y + 52, 670, y + 52, 0.90 + i * 0.012, 0.94 + i * 0.012);
     });
 
     foot = svgEl("text", { class: "stg-tx mfoot", x: 400, y: 7940, "text-anchor": "middle" }, texts);
@@ -410,71 +441,11 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
   }
 
   /* ---------- scroll engine: dwell-glide (desktop) / linear pan (mobile) ---------- */
-  let ready = calm;
-  let wrapTop = 0;
-  let range = 1;
-
-  const measure = (): void => {
-    const r = wrap.getBoundingClientRect();
-    wrapTop = r.top + window.scrollY;
-    range = Math.max(1, wrap.offsetHeight - innerHeight);
-  };
-
-  const update = (): void => {
-    const yv = window.scrollY;
-    const p = calm ? 1 : clamp((yv - wrapTop) / range);
-    if (mobile) {
-      svg.setAttribute("viewBox", calm ? "0 0 800 " + WORLD_M : "0 " + (p * PAN_M).toFixed(1) + " 800 " + MWF);
-    } else {
-      const cam = calm ? 0 : F * (ss(CAM[0][0], CAM[0][1], p) + ss(CAM[1][0], CAM[1][1], p));
-      svg.setAttribute("viewBox", calm ? "0 0 1600 " + WORLD_D : "0 " + cam.toFixed(1) + " 1600 " + F);
-    }
-    for (let i = 0; i < items.length; i++) {
-      const it = items[i];
-      const k = calm ? 1 : clamp((p - it.s) / (it.e - it.s));
-      if (it.isLine) it.el.style.strokeDashoffset = String(1 - k);
-      else {
-        it.el.style.opacity = String(k);
-        it.el.style.transform = "translateY(" + (it.dir || 1) * (1 - k) * 10 + "px)";
-      }
-    }
-    for (let i = 0; i < slots.length; i++) {
-      const s = slots[i];
-      const d = calm ? 0 : (p * (WORLD_D - F)) - F * s.f;
-      s.g.style.opacity = calm ? "1" : String(clamp(1 - Math.abs(d) / (0.75 * F)));
-      s.g.setAttribute("transform", "translate(0 " + (0.15 * d).toFixed(1) + ")");
-    }
-    let ride: Item | null = null;
-    for (let j = 0; j < segs.length; j++) {
-      const sg = segs[j];
-      if (p >= sg.s && p <= sg.e && (ride === null || sg.s > ride.s)) ride = sg;
-    }
-    if (ride && ready && !calm) {
-      const k2 = clamp((p - ride.s) / (ride.e - ride.s));
-      pen.setAttribute("cx", String(ride.x1! + (ride.x2! - ride.x1!) * k2));
-      pen.setAttribute("cy", String(ride.y1! + (ride.y2! - ride.y1!) * k2));
-      pen.style.opacity = "1";
-    } else pen.style.opacity = "0";
-    if (hint) hint.style.opacity = ready && !calm && yv < 40 ? "1" : "0";
-    if (foot) foot.style.opacity = String(clamp((p - 0.96) / 0.04));
-  };
-
-  let raf = 0;
-  const sched = (): void => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); }); };
-  const onScroll = (): void => sched();
-  const onResize = (): void => {
-    const m = matchMedia("(max-width:820px)").matches;
-    if (m === modeDesktop) {
-      if (currentHost && currentStore) renderStage(currentStore, currentHost); /* crossed the breakpoint */
-      return;
-    }
-    measure(); sched();
-  };
-  addEventListener("scroll", onScroll, { passive: true });
-  addEventListener("resize", onResize);
-
-  let timer = 0;
-  if (!calm) timer = window.setTimeout(() => { ready = true; update(); }, 5400);
+  const scrollEngine = createScrollEngine({
+    wrap, svg: svg as SVGSVGElement, items, segs, slots, hint, foot, pen,
+    mobile, calm,
+    F, WORLD_D, WORLD_M, PAN_M, MWF, CAM,
+  });
 
   const navHandler = (e: Event): void => {
     const btn = (e.target as HTMLElement).closest("[data-nav]");
@@ -487,16 +458,13 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
       return;
     }
     const frac = mobile ? (key === "about" ? 0.37 : 0.62) : (key === "about" ? 0.15 : 0.50);
-    scrollTo({ top: wrapTop + frac * range, behavior: smooth });
+    scrollTo({ top: scrollEngine.getWrapTop() + frac * scrollEngine.getRange(), behavior: smooth });
   };
   document.addEventListener("click", navHandler);
 
   teardown = (): void => {
-    removeEventListener("scroll", onScroll);
-    removeEventListener("resize", onResize);
+    scrollEngine.teardown();
     document.removeEventListener("click", navHandler);
-    clearTimeout(timer);
-    if (raf) cancelAnimationFrame(raf);
   };
 
   if (!wired.has(i18n)) {
@@ -510,121 +478,12 @@ export function renderStage(i18n: I18nStore, host: HTMLElement): void {
   const hasFinePointer = matchMedia("(hover:hover) and (pointer:fine)").matches;
   const enable3D = !prefersReducedMotion && isDesktop && hasFinePointer;
 
-  let cardEls: Array<SVGGElement> = [];
-  let cardRects: Array<DOMRect> = [];
-  let pointerX = 0;
-  let pointerY = 0;
-  let targetRx = 0;
-  let targetRy = 0;
-  let currentRx = 0;
-  let currentRy = 0;
-  let interactionRaf = 0;
-  let pointerInside = false;
-
-  function init3DCards(): void {
-    if (!enable3D) return;
-    cardEls = Array.from(wrap.querySelectorAll<SVGGElement>(".stg-card, .stg-slot"));
-    if (cardEls.length === 0) return;
-
-    cardEls.forEach((el, i) => {
-      const n = cardEls.length;
-      const visualIndex = fa ? n - 1 - i : i;
-      const center = (n - 1) / 2;
-      const offset = visualIndex - center;
-      const idleDeg = offset * -5;
-      const zPx = -Math.abs(offset) * 24;
-      el.style.setProperty("--idle", `${idleDeg}deg`);
-      el.style.setProperty("--z", `${zPx}px`);
-      el.style.setProperty("--ry", "0deg");
-      el.style.setProperty("--rx", "0deg");
-    });
-
-    updateCardRects();
-  }
-
-  function updateCardRects(): void {
-    cardRects = cardEls.map((el) => el.getBoundingClientRect());
-  }
-
-  function onPointerMove(e: PointerEvent): void {
-    if (!enable3D || cardEls.length === 0) return;
-    pointerX = e.clientX;
-    pointerY = e.clientY;
-    pointerInside = true;
-    if (!interactionRaf) interactionRaf = requestAnimationFrame(update3DTransform);
-  }
-
-  function onPointerLeave(): void {
-    if (!enable3D) return;
-    pointerInside = false;
-    targetRx = 0;
-    targetRy = 0;
-  }
-
-  function update3DTransform(): void {
-    interactionRaf = 0;
-    if (!pointerInside) {
-      currentRx += (targetRx - currentRx) * 0.15;
-      currentRy += (targetRy - currentRy) * 0.15;
-      if (Math.abs(currentRx) < 0.01 && Math.abs(currentRy) < 0.01) {
-        currentRx = 0;
-        currentRy = 0;
-      } else {
-        requestAnimationFrame(update3DTransform);
-      }
-    } else {
-      updateCardRects();
-      cardEls.forEach((el, i) => {
-        const rect = cardRects[i];
-        if (!rect || rect.width === 0 || rect.height === 0) return;
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const px = (pointerX - cx) / rect.width;
-        const py = (pointerY - cy) / rect.height;
-        const rx = -py * 14;
-        const ry = px * 14;
-        el.style.setProperty("--rx", `${rx}deg`);
-        el.style.setProperty("--ry", `${ry}deg`);
-      });
-    }
-    if (pointerInside || Math.abs(currentRx) > 0.01 || Math.abs(currentRy) > 0.01) {
-      interactionRaf = requestAnimationFrame(update3DTransform);
-    }
-  }
-
-  function onFocusIn(): void {
-    if (!enable3D) return;
-    pointerInside = true;
-  }
-
-  function onFocusOut(): void {
-    if (!enable3D) return;
-    pointerInside = false;
-    targetRx = 0;
-    targetRy = 0;
-  }
-
   if (enable3D) {
-    init3DCards();
-    wrap.addEventListener("pointermove", onPointerMove, { passive: true });
-    wrap.addEventListener("pointerleave", onPointerLeave);
-    wrap.addEventListener("focusin", onFocusIn);
-    wrap.addEventListener("focusout", onFocusOut);
-    window.addEventListener("resize", updateCardRects, { passive: true });
-
+    const cardTeardown = initCardInteraction({ wrap, fa, enable3D: true });
     const originalTeardown = teardown;
     teardown = (): void => {
       originalTeardown();
-      wrap.removeEventListener("pointermove", onPointerMove);
-      wrap.removeEventListener("pointerleave", onPointerLeave);
-      wrap.removeEventListener("focusin", onFocusIn);
-      wrap.removeEventListener("focusout", onFocusOut);
-      window.removeEventListener("resize", updateCardRects);
-      if (interactionRaf) cancelAnimationFrame(interactionRaf);
+      cardTeardown();
     };
   }
-
-  measure();
-  update();
-  window.setTimeout(() => { measure(); update(); }, 80);
 }

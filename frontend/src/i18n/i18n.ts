@@ -36,24 +36,48 @@ export function getDictionary(locale: Locale): Dict {
  * Dot-path lookup, e.g. t(dict, "header.nav.services").
  * Falls back to returning the path itself when a key is missing,
  * so missing translations are visibly obvious instead of blank.
+ * No `any` is used: values are narrowed at each step.
  */
 export function t(dict: Dict, path: string): string {
   const parts = path.split(".");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let node: any = dict;
+  let current: unknown = dict;
   for (const part of parts) {
-    if (node && typeof node === "object" && part in node) {
-      node = node[part];
+    if (current !== null && typeof current === "object" && part in current) {
+      current = (current as Record<string, unknown>)[part];
     } else {
       return path;
     }
   }
-  return typeof node === "string" ? node : path;
+  return typeof current === "string" ? current : path;
 }
 
 export function applyDocumentDirection(dict: Dict): void {
   document.documentElement.lang = dict.meta.lang;
   document.documentElement.dir = dict.meta.dir;
+}
+
+/* Keeps the static JSON-LD block in index.html in sync with the active locale. */
+export function applyJsonLd(locale: Locale): void {
+  const el = document.getElementById("json-ld") as HTMLScriptElement | null;
+  if (!el) return;
+  const payload = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "The Hanging Man",
+    "jobTitle": "Independent Software Developer",
+    "url": "https://thehangingman.pages.dev/",
+    "sameAs": [
+      "https://t.me/thehangingman1911",
+      "https://wa.me/message/CCMR56KMR4R3M1",
+      "https://github.com/thehangingman1911-ai",
+      "https://x.com/rbaghani31159"
+    ],
+    "email": "thehangingman.1911@gmail.com",
+    "description": locale === "fa"
+      ? "The Hanging Man؛ توسعه‌دهنده‌ی مستقل نرم‌افزار: وب‌اپ، بک-end و API و اتوماسیون. یک توسعه‌دهنده، با دامنه و قیمتِ روشن، نرم‌افزارِ کارا."
+      : "Independent software developer: web apps, backends and APIs, automation. One developer, clear scope and price, working software."
+  };
+  el.textContent = JSON.stringify(payload, null, 2);
 }
 
 type LocaleChangeListener = (locale: Locale, dict: Dict) => void;
@@ -92,6 +116,7 @@ export class I18nStore {
     setMeta('property', 'og:title', t(this.dict, 'doc.title'));
     setMeta('property', 'og:description', t(this.dict, 'doc.desc'));
     setMeta('property', 'og:locale', locale === 'fa' ? 'fa_IR' : 'en');
+    applyJsonLd(locale);
     this.listeners.forEach((listener) => listener(this.locale, this.dict));
   }
 

@@ -1,0 +1,22 @@
+﻿{
+  "models": {
+    "providers": {
+      "freellmapi": {
+        "baseUrl": "https://rza1914-freeapi.hf.space/v1",
+        "apiKey": "freellmapi-0797df9521734627c9947d311b249231fd3ea63f48dd9cfe",
+        "models": [
+          { "id": "nemotron-3-ultra-550b", "name": "Nemotron 3 Ultra 550B" },
+          { "id": "nemotron-3.5-lightning-30b-a3b", "name": "Nemotron 3.5 Lightning 30B A3B" },
+          { "id": "nemotron-3-nano-omni-30b-a3b-reasoning", "name": "Nemotron 3 Nano Omni 30B A3B Reasoning" }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "entries": {
+      "architect": { "model": "freellmapi/nemotron-3-ultra-550b" },
+      "builder": { "model": "freellmapi/nemotron-3.5-lightning-30b-a3b" },
+      "judge": { "model": "freellmapi/nemotron-3-nano-omni-30b-a3b-reasoning" }
+    }
+  }
+}

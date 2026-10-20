@@ -1,0 +1,5 @@
+dist/
+node_modules/
+public/fonts/*.woff2
+docs/polish/
+scripts/*.mjs

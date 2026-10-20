@@ -195,9 +195,6 @@ Done:
 - Type-checked build (`tsc --noEmit && vite build`), 50/50 tests green
 
 Pending (before real traffic):
-- [ ] Backend hardening: in-memory rate limiting (~5 requests/hour per IP)
-      and a production guard that fails closed when Telegram credentials
-      are missing, instead of silently returning mock success
 - [ ] `BOT_TOKEN` / `CHAT_ID` on Render
 - [ ] Optional `frontend/public/logo.png`
 - [ ] Custom domain + canonical/OG URLs

@@ -1,3 +1,10 @@
+/* Depth field: a subtle depth-cue canvas behind the content.
+   Uses the shared requestAnimationFrame scheduler (one loop for scene, depth
+   field and cursor). Pauses when the document is hidden. Reads scroll/pointer
+   state in passive listeners and applies it once per frame — no layout reads
+   inside scroll handlers. */
+import { onFrame, setPaused } from "../scheduler";
+
 interface DepthFieldState {
   vpx: number;
   vpy: number;
@@ -6,7 +13,6 @@ interface DepthFieldState {
   targetVpy: number;
 }
 
-let rafId: number | null = null;
 let canvas: HTMLCanvasElement | null = null;
 let ctx: CanvasRenderingContext2D | null = null;
 let state: DepthFieldState = {
@@ -23,6 +29,7 @@ let isReducedMotion = false;
 let isMobile = false;
 let dpr = 1;
 let mounted = false;
+let unsubFrame: (() => void) | null = null;
 
 const N = 14;
 const zNear = 1;
@@ -124,10 +131,23 @@ function draw(): void {
   });
 }
 
+function lerpState(): void {
+  state.vpx += (state.targetVpx - state.vpx) * lerpK;
+  state.vpy += (state.targetVpy - state.vpy) * lerpK;
+}
+
+function frameTask(now: number): void {
+  if (document.hidden) return;
+  lerpState();
+  draw();
+}
+
 function onScroll(): void {
-  if (isReducedMotion || isMobile) return;
+  /* No layout read here — just capture a number. The batched apply happens in the frame task. */
   lastScrollY = window.scrollY;
-  state.phase = lastScrollY * scrollSpeed;
+  if (!isReducedMotion && !isMobile) {
+    state.phase = lastScrollY * scrollSpeed;
+  }
 }
 
 function onPointerMove(e: PointerEvent): void {
@@ -142,46 +162,25 @@ function onPointerMove(e: PointerEvent): void {
   state.targetVpy = h * vanishingYRatio + py * h * maxPointerOffset;
 }
 
-function lerpState(): void {
-  state.vpx += (state.targetVpx - state.vpx) * lerpK;
-  state.vpy += (state.targetVpy - state.vpy) * lerpK;
-}
-
-function animationLoop(): void {
-  if (document.hidden) {
-    rafId = requestAnimationFrame(animationLoop);
-    return;
-  }
-  lerpState();
-  draw();
-  rafId = requestAnimationFrame(animationLoop);
-}
-
 function onVisibilityChange(): void {
-  if (!document.hidden && mounted) {
-    draw();
-  }
+  if (!document.hidden && mounted) draw();
 }
 
 function onResize(): void {
   const wasMobile = isMobile;
   isMobile = window.matchMedia("(max-width: 860px)").matches;
   isReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (wasMobile !== isMobile) {
-    resize();
-  } else {
-    resize();
-  }
+  resize();
 }
 
-function initDepthField(): void {
+export function initDepthField(): void {
   if (mounted) return;
   canvas = document.createElement("canvas");
   canvas.id = "depth-field";
   canvas.setAttribute("aria-hidden", "true");
   canvas.style.position = "fixed";
   canvas.style.inset = "0";
-  canvas.style.zIndex = "0";
+  canvas.style.zIndex = String(0);
   canvas.style.pointerEvents = "none";
   document.body.prepend(canvas);
   ctx = canvas.getContext("2d", { alpha: true, desynchronized: true })!;
@@ -189,7 +188,7 @@ function initDepthField(): void {
   isMobile = window.matchMedia("(max-width: 860px)").matches;
   resize();
   if (!isReducedMotion && !isMobile) {
-    rafId = requestAnimationFrame(animationLoop);
+    unsubFrame = onFrame(frameTask);
   } else {
     draw();
   }
@@ -200,17 +199,15 @@ function initDepthField(): void {
   mounted = true;
 }
 
-function destroyDepthField(): void {
+export function destroyDepthField(): void {
   if (!mounted) return;
+  if (unsubFrame) { unsubFrame(); unsubFrame = null; }
   window.removeEventListener("scroll", onScroll);
   window.removeEventListener("pointermove", onPointerMove);
   window.removeEventListener("resize", onResize);
   document.removeEventListener("visibilitychange", onVisibilityChange);
-  if (rafId) cancelAnimationFrame(rafId);
   canvas?.remove();
   canvas = null;
   ctx = null;
   mounted = false;
 }
-
-export { initDepthField, destroyDepthField };

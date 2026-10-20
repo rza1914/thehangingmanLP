@@ -1,0 +1,12 @@
+﻿{
+  "agents": {
+    "entries": {
+      "coordinator": {
+        "subagents": {
+          "delegationMode": "prefer",
+          "allowAgents": ["architect", "builder", "judge"]
+        }
+      }
+    }
+  }
+}

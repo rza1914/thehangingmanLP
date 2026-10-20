@@ -1,0 +1,124 @@
+/* Scroll engine for the desktop/mobile line scene.
+   Single responsibility: drive the scroll-linked draw/wipe animation of the
+   already-built SVG items, slots, pen, hint and foot. No scene-graph building
+   happens here — it receives the rendered elements and animates them.
+   One batched read per frame (measure on resize, scrollY in the scroll
+   listener), applied inside requestAnimationFrame. */
+import type { Item } from "./stage";
+
+interface ScrollEngineOpts {
+  wrap: HTMLElement;
+  svg: SVGSVGElement;
+  items: Item[];
+  segs: Item[];
+  slots: Array<{ g: SVGElement; f: number }>;
+  hint: SVGElement | null;
+  foot: SVGElement | null;
+  pen: SVGElement;
+  mobile: boolean;
+  calm: boolean;
+  /* scene constants */
+  F: number;
+  WORLD_D: number;
+  WORLD_M: number;
+  PAN_M: number;
+  MWF: number;
+  CAM: Array<[number, number]>;
+}
+
+export function createScrollEngine(opts: ScrollEngineOpts): {
+  teardown: () => void;
+  getWrapTop: () => number;
+  getRange: () => number;
+} {
+  const {
+    wrap, svg, items, segs, slots, hint, foot, pen,
+    mobile, calm, F, WORLD_D, WORLD_M, PAN_M, MWF, CAM,
+  } = opts;
+
+  const clamp = (v: number): number => Math.max(0, Math.min(1, v));
+  const ss = (a: number, b: number, p: number): number => {
+    const q = clamp((p - a) / (b - a));
+    return q * q * (3 - 2 * q);
+  };
+
+  const INTRO_END_MS = 5000;
+
+  let wrapTop = 0;
+  let range = 1;
+  let raf = 0;
+  let timer = 0;
+  let ready = calm;
+
+  const measure = (): void => {
+    const r = wrap.getBoundingClientRect();
+    wrapTop = r.top + window.scrollY;
+    range = Math.max(1, wrap.offsetHeight - innerHeight);
+  };
+
+  const update = (): void => {
+    const yv = window.scrollY;
+    const p = calm ? 1 : clamp((yv - wrapTop) / range);
+    if (mobile) {
+      svg.setAttribute(
+        "viewBox",
+        calm ? "0 0 800 " + WORLD_M : "0 " + (p * PAN_M).toFixed(1) + " 800 " + MWF
+      );
+    } else {
+      const cam =
+        calm ? 0 : F * (ss(CAM[0][0], CAM[0][1], p) + ss(CAM[1][0], CAM[1][1], p) + ss(CAM[2][0], CAM[2][1], p));
+      svg.setAttribute("viewBox", calm ? "0 0 1600 " + WORLD_D : "0 " + cam.toFixed(1) + " 1600 " + F);
+    }
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      const k = calm ? 1 : ss(it.s, it.e, p);
+      if (it.isLine) it.el.style.strokeDashoffset = String(1 - k);
+      else {
+        it.el.style.opacity = String(k);
+        it.el.style.transform = "translateY(" + (it.dir || 1) * (1 - k) * 10 + "px)";
+      }
+    }
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      const d = calm ? 0 : p * (WORLD_D - F) - F * s.f;
+      s.g.style.opacity = calm ? "1" : String(clamp(1 - Math.abs(d) / (0.75 * F)));
+      s.g.setAttribute("transform", "translate(0 " + (0.15 * d).toFixed(1) + ")");
+    }
+    let ride: Item | null = null;
+    for (let j = 0; j < segs.length; j++) {
+      const sg = segs[j];
+      if (p >= sg.s && p <= sg.e && (ride === null || sg.s > ride.s)) ride = sg;
+    }
+    if (ride && ready && !calm) {
+      const k2 = clamp((p - ride.s) / (ride.e - ride.s));
+      pen.setAttribute("cx", String(ride.x1! + (ride.x2! - ride.x1!) * k2));
+      pen.setAttribute("cy", String(ride.y1! + (ride.y2! - ride.y1!) * k2));
+      pen.style.opacity = "1";
+    } else pen.style.opacity = "0";
+    if (hint) hint.style.opacity = ready && !calm && yv < 40 ? "1" : "0";
+    if (foot) foot.style.opacity = String(clamp((p - 0.96) / 0.04));
+  };
+
+  const sched = (): void => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); }); };
+  const onScroll = (): void => sched();
+  const onResize = (): void => { measure(); sched(); };
+
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onResize);
+
+  if (!calm) timer = window.setTimeout(() => { ready = true; update(); }, INTRO_END_MS);
+  measure();
+  update();
+  window.setTimeout(() => { measure(); update(); }, 80);
+
+  return {
+    teardown: (): void => {
+      removeEventListener("scroll", onScroll);
+      removeEventListener("resize", onResize);
+      clearTimeout(timer);
+      if (raf) cancelAnimationFrame(raf);
+    },
+    getWrapTop: (): number => wrapTop,
+    getRange: (): number => range,
+  };
+}

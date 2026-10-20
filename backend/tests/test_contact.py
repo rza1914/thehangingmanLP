@@ -63,3 +63,91 @@ def test_contact_telegram_failure_returns_502(monkeypatch):
 
     response = client.post("/contact", json=VALID_PAYLOAD)
     assert response.status_code == 502
+
+
+def test_telegram_error_timeout_type(monkeypatch):
+    monkeypatch.setenv("BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("CHAT_ID", "fake-chat")
+
+    from app.services.telegram import TelegramDeliveryError, send_contact_message
+    import httpx
+
+    class FailingClient:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return False
+        async def post(self, url, json):
+            raise httpx.TimeoutException("read timed out")
+
+    monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: FailingClient())
+
+    payload = type("P", (), {"locale": "en", "name": "n", "email": "a@b.co", "message": "m", "honeypot": ""})()
+
+    import asyncio
+    try:
+        asyncio.run(send_contact_message(payload))
+    except TelegramDeliveryError as exc:
+        assert exc.error_type == "timeout"
+    else:
+        raise AssertionError("expected TelegramDeliveryError")
+
+
+def test_telegram_error_connection_type(monkeypatch):
+    monkeypatch.setenv("BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("CHAT_ID", "fake-chat")
+
+    from app.services.telegram import TelegramDeliveryError, send_contact_message
+    import httpx
+
+    class FailingClient:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return False
+        async def post(self, url, json):
+            raise httpx.ConnectError("connection refused")
+
+    monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: FailingClient())
+
+    payload = type("P", (), {"locale": "en", "name": "n", "email": "a@b.co", "message": "m", "honeypot": ""})()
+
+    import asyncio
+    try:
+        asyncio.run(send_contact_message(payload))
+    except TelegramDeliveryError as exc:
+        assert exc.error_type == "connection"
+    else:
+        raise AssertionError("expected TelegramDeliveryError")
+
+
+def test_telegram_error_http_status_type(monkeypatch):
+    monkeypatch.setenv("BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("CHAT_ID", "fake-chat")
+
+    from app.services.telegram import TelegramDeliveryError, send_contact_message
+    import httpx
+
+    class FakeResponse:
+        status_code = 502
+
+    class FailingClient:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return False
+        async def post(self, url, json):
+            raise httpx.HTTPStatusError("server error", request=httpx.Request("POST", "http://x"), response=FakeResponse())
+
+    monkeypatch.setattr(httpx, "AsyncClient", lambda *args, **kwargs: FailingClient())
+
+    payload = type("P", (), {"locale": "en", "name": "n", "email": "a@b.co", "message": "m", "honeypot": ""})()
+
+    import asyncio
+    try:
+        asyncio.run(send_contact_message(payload))
+    except TelegramDeliveryError as exc:
+        assert exc.error_type == "http"
+        assert exc.status_code == 502
+    else:
+        raise AssertionError("expected TelegramDeliveryError")

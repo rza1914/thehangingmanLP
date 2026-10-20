@@ -18,14 +18,14 @@ export function renderFaq(i18n: I18nStore): HTMLElement {
 
     const renderItems = items.map((item, index) => {
       const isOpen = toggleState.has(index);
+      const idx = String(index + 1).padStart(2, '0');
       return `
         <div class="faq-item${isOpen ? ' open' : ''}">
           <h3 class="faq-q">
-            <button type="button" id="faq-q-${index}" aria-expanded="${isOpen}" aria-controls="faq-a-${index}">
-              <span>${t(dict, item.q)}</span>
-              <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6"/></svg>
+            <button type="button" class="faq-q-btn" id="faq-q-${index}" aria-expanded="${isOpen}" aria-controls="faq-a-${index}">
+              <span class="faq-index">${idx}</span>
+              <span class="faq-q-text">${t(dict, item.q)}</span>
+              <svg class="faq-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>
             </button>
           </h3>
           <div class="faq-a" id="faq-a-${index}" role="region" aria-labelledby="faq-q-${index}">
